@@ -15,6 +15,8 @@ class FactLandmark : public Landmark {
 public:
     virtual bool is_true_in_state(const GlobalState &state) const = 0;
     virtual bool is_true_in_state(const State &state) const = 0;
+    virtual std::set<int> get_first_achievers() const = 0;
+    virtual std::set<int> get_possible_achievers() const = 0;
 };
 
 class AtomicFactLandmark : public FactLandmark {
