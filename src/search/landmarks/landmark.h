@@ -20,22 +20,28 @@ public:
 };
 
 class AtomicFactLandmark : public FactLandmark {
-    FactPair &fact;
+    const FactPair &fact;
 public:
+    AtomicFactLandmark() = delete;
+    explicit AtomicFactLandmark(FactPair &fact);
     bool is_true_in_state(const GlobalState &state) const override;
     bool is_true_in_state(const State &state) const override;
 };
 
 class DisjunctiveFactLandmark : public FactLandmark {
-    std::vector<FactPair> facts;
+    const std::vector<FactPair> facts;
 public:
+    DisjunctiveFactLandmark() = delete;
+    explicit DisjunctiveFactLandmark(std::vector<FactPair> &facts);
     virtual bool is_true_in_state(const GlobalState &state) const override;
     virtual bool is_true_in_state(const State &state) const override;
 };
 
 class ConjunctiveFactLandmark : public FactLandmark {
-    std::vector<FactPair> facts;
+    const std::vector<FactPair> facts;
 public:
+    ConjunctiveFactLandmark() = delete;
+    explicit ConjunctiveFactLandmark(std::vector<FactPair> &facts);
     virtual bool is_true_in_state(const GlobalState &state) const override;
     virtual bool is_true_in_state(const State &state) const override;
 };
