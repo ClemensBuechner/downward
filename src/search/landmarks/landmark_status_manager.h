@@ -16,7 +16,7 @@ class LandmarkStatusManager {
     LandmarkGraph &lm_graph;
 
     bool landmark_is_leaf(const LandmarkNode &node, const BitsetView &reached) const;
-    bool landmark_needed_again(int id, const GlobalState &state);
+    bool check_lost_landmark_children_needed_again(const LandmarkNode &node) const;
 public:
     explicit LandmarkStatusManager(LandmarkGraph &graph);
 

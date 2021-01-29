@@ -118,18 +118,17 @@ bool LandmarkStatusManager::update_reached_lms(
 void LandmarkStatusManager::update_lm_status(const GlobalState &global_state) {
     const BitsetView reached = get_reached_landmarks(global_state);
 
-    const LandmarkGraph::Nodes &nodes = lm_graph.get_nodes();
-
     /* This first loop is necessary as setup for the *needed again*
        check in the second loop. */
     for (int id = 0; id < lm_graph.number_of_landmarks(); ++id) {
         lm_status[id] = reached.test(id) ? lm_reached : lm_not_reached;
     }
-    for (auto &node : nodes) {
+    for (auto &node : lm_graph.get_nodes()) {
         int id = node->get_id();
-        if (lm_status[id] == lm_reached
-            && landmark_needed_again(id, global_state)) {
-            lm_status[id] = lm_needed_again;
+        if (lm_status[id] == lm_reached && !node->is_true_in_state(global_state)) {
+            if (node->is_goal() || check_lost_landmark_children_needed_again(*node)) {
+                lm_status[id] = lm_needed_again;
+            }
         }
     }
 }
@@ -163,27 +162,13 @@ bool LandmarkStatusManager::dead_end_exists() {
     return false;
 }
 
-bool LandmarkStatusManager::landmark_needed_again(
-    int id, const GlobalState &state) {
-    LandmarkNode *node = lm_graph.get_lm_for_index(id);
-    if (node->is_true_in_state(state)) {
-        return false;
-    } else if (node->is_goal()) {
-        return true;
-    } else {
-        /*
-          For all A ->_gn B, if B is not reached and A currently not
-          true, since A is a necessary precondition for actions
-          achieving B for the first time, it must become true again.
-        */
-        for (const auto &child : node->children) {
-            if (child.second >= EdgeType::greedy_necessary
-                && lm_status[child.first->get_id()] == lm_not_reached) {
-                return true;
-            }
-        }
-        return false;
+bool LandmarkStatusManager::check_lost_landmark_children_needed_again(const LandmarkNode &node) const {
+    for (const auto &child : node.children) {
+        LandmarkNode *child_node = child.first;
+        if (child.second >= EdgeType::greedy_necessary && lm_status[child_node->get_id()] == lm_not_reached)
+            return true;
     }
+    return false;
 }
 
 bool LandmarkStatusManager::landmark_is_leaf(const LandmarkNode &node,
