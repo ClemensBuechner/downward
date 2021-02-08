@@ -13,7 +13,6 @@ namespace landmarks {
 */
 LandmarkStatusManager::LandmarkStatusManager(LandmarkGraph &graph)
     : reached_lms(vector<bool>(graph.number_of_landmarks(), true)),
-      lm_status(graph.number_of_landmarks(), lm_not_reached),
       lm_graph(graph) {
 }
 
@@ -115,27 +114,33 @@ bool LandmarkStatusManager::update_reached_lms(
     return true;
 }
 
-void LandmarkStatusManager::update_lm_status(const GlobalState &global_state) {
+bool LandmarkStatusManager::update_lm_status(const GlobalState &global_state) {
     const BitsetView reached = get_reached_landmarks(global_state);
 
-    /* This first loop is necessary as setup for the *needed again*
-       check in the second loop. */
-    for (int id = 0; id < lm_graph.number_of_landmarks(); ++id) {
-        lm_status[id] = reached.test(id) ? lm_reached : lm_not_reached;
-    }
-    for (auto &node : lm_graph.get_nodes()) {
-        int id = node->get_id();
-        if (lm_status[id] == lm_reached && !node->is_true_in_state(global_state)) {
-            if (node->is_goal() || check_lost_landmark_children_needed_again(*node)) {
-                lm_status[id] = lm_needed_again;
-            }
+    const LandmarkGraph::Nodes &nodes = lm_graph.get_nodes();
+    // initialize all nodes to not reached and not effect of unused ALM
+    for (auto &node : nodes) {
+        node->status = lm_not_reached;
+        if (reached.test(node->get_id())) {
+            node->status = lm_reached;
         }
     }
-}
 
-bool LandmarkStatusManager::dead_end_exists() {
-    for (auto &node : lm_graph.get_nodes()) {
-        int id = node->get_id();
+    bool dead_end_found = false;
+
+    // mark reached and find needed again landmarks
+    for (auto &node : nodes) {
+        if (node->status == lm_reached) {
+            if (!node->is_true_in_state(global_state)) {
+                if (node->is_goal()) {
+                    node->status = lm_needed_again;
+                } else {
+                    if (check_lost_landmark_children_needed_again(*node)) {
+                        node->status = lm_needed_again;
+                    }
+                }
+            }
+        }
 
         /*
           This dead-end detection works for the following case:
@@ -149,23 +154,23 @@ bool LandmarkStatusManager::dead_end_exists() {
         */
 
         if (!node->is_derived) {
-            if ((lm_status[id] == lm_not_reached) &&
+            if ((node->status == lm_not_reached) &&
                 node->first_achievers.empty()) {
-                return true;
+                dead_end_found = true;
             }
-            if ((lm_status[id] == lm_needed_again) &&
+            if ((node->status == lm_needed_again) &&
                 node->possible_achievers.empty()) {
-                return true;
+                dead_end_found = true;
             }
         }
     }
-    return false;
+    return dead_end_found;
 }
 
 bool LandmarkStatusManager::check_lost_landmark_children_needed_again(const LandmarkNode &node) const {
     for (const auto &child : node.children) {
         LandmarkNode *child_node = child.first;
-        if (child.second >= EdgeType::greedy_necessary && lm_status[child_node->get_id()] == lm_not_reached)
+        if (child.second >= EdgeType::greedy_necessary && child_node->status == lm_not_reached)
             return true;
     }
     return false;

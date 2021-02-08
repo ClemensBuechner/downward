@@ -30,12 +30,14 @@ enum class EdgeType {
     obedient_reasonable = 0
 };
 
+enum landmark_status {lm_reached = 0, lm_not_reached = 1, lm_needed_again = 2};
+
 class LandmarkNode {
     int id;
 public:
     LandmarkNode(std::vector<FactPair> &facts, bool disj, bool conj = false)
         : id(-1), facts(facts), disjunctive(disj), conjunctive(conj), in_goal(false),
-          min_cost(1), is_derived(false) {
+          min_cost(1), status(lm_not_reached), is_derived(false) {
     }
 
     std::vector<FactPair> facts;
@@ -46,8 +48,10 @@ public:
     bool in_goal;
     int min_cost; // minimal cost of achieving operators
 
+    landmark_status status;
     bool is_derived;
 
+    utils::HashSet<FactPair> forward_orders;
     std::set<int> first_achievers;
     std::set<int> possible_achievers;
 
@@ -99,6 +103,10 @@ public:
             }
             return true;
         }
+    }
+
+    int get_status() const {
+        return status;
     }
 };
 

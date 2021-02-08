@@ -99,8 +99,9 @@ int LandmarkCountHeuristic::get_heuristic_value(const GlobalState &global_state)
     // they do not get counted as reached in that case). However, we
     // must return 0 for a goal state.
 
-    lm_status_manager->update_lm_status(global_state);
-    if (lm_status_manager->dead_end_exists()) {
+    bool dead_end = lm_status_manager->update_lm_status(global_state);
+
+    if (dead_end) {
         return DEAD_END;
     }
 
@@ -111,8 +112,7 @@ int LandmarkCountHeuristic::get_heuristic_value(const GlobalState &global_state)
     } else {
         int h = 0;
         for (auto &lm : lgraph->get_nodes()) {
-            switch (lm_status_manager->get_landmark_status(
-                        lm->get_id())) {
+            switch (lm->status) {
             case lm_reached:
                 break;
             case lm_not_reached:

@@ -2,12 +2,11 @@
 #define LANDMARKS_LANDMARK_STATUS_MANAGER_H
 
 #include "../per_state_bitset.h"
+#include "landmark_count_heuristic.h"
 
 namespace landmarks {
 class LandmarkGraph;
 class LandmarkNode;
-
-enum landmark_status {lm_reached = 0, lm_not_reached = 1, lm_needed_again = 2};
 
 class LandmarkStatusManager {
     PerStateBitset reached_lms;
@@ -22,8 +21,7 @@ public:
 
     BitsetView get_reached_landmarks(const GlobalState &state);
 
-    void update_lm_status(const GlobalState &global_state);
-    bool dead_end_exists();
+    bool update_lm_status(const GlobalState &global_state);
 
     void set_landmarks_for_initial_state(const GlobalState &initial_state);
     bool update_reached_lms(const GlobalState &parent_global_state,
