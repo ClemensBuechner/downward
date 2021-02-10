@@ -1,8 +1,9 @@
 #ifndef LANDMARKS_LANDMARK_STATUS_MANAGER_H
 #define LANDMARKS_LANDMARK_STATUS_MANAGER_H
 
+#include "landmark_graph.h"
+
 #include "../per_state_bitset.h"
-#include "landmark_count_heuristic.h"
 
 namespace landmarks {
 class LandmarkGraph;
