@@ -37,7 +37,7 @@ class LandmarkNode {
 public:
     LandmarkNode(std::vector<FactPair> &facts, bool disj, bool conj = false)
         : id(-1), facts(facts), disjunctive(disj), conjunctive(conj), in_goal(false),
-          min_cost(1), status(lm_not_reached), is_derived(false) {
+          min_cost(1), is_derived(false) {
     }
 
     std::vector<FactPair> facts;
@@ -48,7 +48,6 @@ public:
     bool in_goal;
     int min_cost; // minimal cost of achieving operators
 
-    landmark_status status;
     bool is_derived;
 
     utils::HashSet<FactPair> forward_orders;
@@ -103,10 +102,6 @@ public:
             }
             return true;
         }
-    }
-
-    int get_status() const {
-        return status;
     }
 };
 
