@@ -24,7 +24,8 @@ public:
 
     BitsetView get_reached_landmarks(const GlobalState &state);
 
-    bool update_lm_status(const GlobalState &global_state);
+    void update_lm_status(const GlobalState &global_state);
+    bool dead_end_exists();
 
     void set_landmarks_for_initial_state(const GlobalState &initial_state);
     bool update_reached_lms(const GlobalState &parent_global_state,
