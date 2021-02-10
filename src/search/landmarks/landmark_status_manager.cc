@@ -118,17 +118,15 @@ bool LandmarkStatusManager::update_lm_status(const GlobalState &global_state) {
     const BitsetView reached = get_reached_landmarks(global_state);
 
     const LandmarkGraph::Nodes &nodes = lm_graph.get_nodes();
-    // initialize all nodes to not reached and not effect of unused ALM
+    /* This first loop is necessary as setup for the *needed again*
+       check in the second loop. */
     for (auto &node : nodes) {
-        node->status = lm_not_reached;
-        if (reached.test(node->get_id())) {
-            node->status = lm_reached;
-        }
+        int id = node->get_id();
+        node->status = reached.test(id) ? lm_reached : lm_not_reached;
     }
 
     bool dead_end_found = false;
 
-    // mark reached and find needed again landmarks
     for (auto &node : nodes) {
         if (node->status == lm_reached) {
             if (!node->is_true_in_state(global_state)) {
