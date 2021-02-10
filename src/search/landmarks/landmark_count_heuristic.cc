@@ -112,7 +112,8 @@ int LandmarkCountHeuristic::get_heuristic_value(const GlobalState &global_state)
     } else {
         int h = 0;
         for (auto &lm : lgraph->get_nodes()) {
-            switch (lm_status_manager->get_landmark_status(lm->get_id())) {
+            switch (lm_status_manager->get_landmark_status(
+                lm->get_id())) {
             case lm_reached:
                 break;
             case lm_not_reached:

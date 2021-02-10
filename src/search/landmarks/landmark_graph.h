@@ -30,8 +30,6 @@ enum class EdgeType {
     obedient_reasonable = 0
 };
 
-enum landmark_status {lm_reached = 0, lm_not_reached = 1, lm_needed_again = 2};
-
 class LandmarkNode {
     int id;
 public:

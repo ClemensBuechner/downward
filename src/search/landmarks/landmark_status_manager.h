@@ -8,6 +8,8 @@ namespace landmarks {
 class LandmarkGraph;
 class LandmarkNode;
 
+enum landmark_status {lm_reached = 0, lm_not_reached = 1, lm_needed_again = 2};
+
 class LandmarkStatusManager {
     PerStateBitset reached_lms;
     std::vector<landmark_status> lm_status;
