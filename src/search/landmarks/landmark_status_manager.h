@@ -45,8 +45,8 @@ public:
       desired state is returned at all times, or an error is thrown
       if the desired information does not exist.
     */
-    landmark_status get_landmark_status(size_t id) const {
-        assert(0 <= id && id < lm_graph.number_of_landmarks());
+    landmark_status get_landmark_status(int id) const {
+        assert(id >= 0 && id < lm_graph.number_of_landmarks());
         return lm_status[id];
     }
 };
