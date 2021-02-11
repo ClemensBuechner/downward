@@ -125,7 +125,7 @@ bool LandmarkStatusManager::update_lm_status(const GlobalState &global_state) {
     for (auto &node : nodes) {
         int id = node->get_id();
         if (lm_status[id] == lm_reached
-            && landmark_needed_again(id, global_state)) {
+            && landmark_needed_again(*node, global_state)) {
             lm_status[id] = lm_needed_again;
         }
 
@@ -155,11 +155,10 @@ bool LandmarkStatusManager::update_lm_status(const GlobalState &global_state) {
 }
 
 bool LandmarkStatusManager::landmark_needed_again(
-    int id, const GlobalState &state) {
-    LandmarkNode *node = lm_graph.get_lm_for_index(id);
-    if (node->is_true_in_state(state)) {
+    const LandmarkNode &node, const GlobalState &state) {
+    if (node.is_true_in_state(state)) {
         return false;
-    } else if (node->is_goal()) {
+    } else if (node.is_goal()) {
         return true;
     } else {
         /*
@@ -167,7 +166,7 @@ bool LandmarkStatusManager::landmark_needed_again(
           true, since A is a necessary precondition for actions
           achieving B for the first time, it must become true again.
         */
-        for (const auto &child : node->children) {
+        for (const auto &child : node.children) {
             if (child.second >= EdgeType::greedy_necessary
                 && lm_status[child.first->get_id()] == lm_not_reached) {
                 return true;
