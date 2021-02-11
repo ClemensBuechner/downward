@@ -109,7 +109,7 @@ bool LandmarkStatusManager::update_reached_lms(
     return true;
 }
 
-void LandmarkStatusManager::update_lm_status(const GlobalState &global_state) {
+bool LandmarkStatusManager::update_lm_status(const GlobalState &global_state) {
     const BitsetView reached = get_reached_landmarks(global_state);
 
     const LandmarkGraph::Nodes &nodes = lm_graph.get_nodes();
@@ -119,18 +119,15 @@ void LandmarkStatusManager::update_lm_status(const GlobalState &global_state) {
     for (int id = 0; id < lm_graph.number_of_landmarks(); ++id) {
         lm_status[id] = reached.test(id) ? lm_reached : lm_not_reached;
     }
+
+    bool dead_end_found = false;
+
     for (auto &node : nodes) {
         int id = node->get_id();
         if (lm_status[id] == lm_reached
             && landmark_needed_again(id, global_state)) {
             lm_status[id] = lm_needed_again;
         }
-    }
-}
-
-bool LandmarkStatusManager::dead_end_exists() {
-    for (auto &node : lm_graph.get_nodes()) {
-        int id = node->get_id();
 
         /*
           This dead-end detection works for the following case:
@@ -146,15 +143,15 @@ bool LandmarkStatusManager::dead_end_exists() {
         if (!node->is_derived) {
             if ((lm_status[id] == lm_not_reached) &&
                 node->first_achievers.empty()) {
-                return true;
+                dead_end_found = true;
             }
             if ((lm_status[id] == lm_needed_again) &&
                 node->possible_achievers.empty()) {
-                return true;
+                dead_end_found = true;
             }
         }
     }
-    return false;
+    return dead_end_found;
 }
 
 bool LandmarkStatusManager::landmark_needed_again(
