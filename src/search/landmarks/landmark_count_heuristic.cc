@@ -111,15 +111,11 @@ int LandmarkCountHeuristic::get_heuristic_value(const GlobalState &global_state)
         return static_cast<int>(ceil(h_val - epsilon));
     } else {
         int h = 0;
-        for (auto &lm : lgraph->get_nodes()) {
-            switch (lm_status_manager->get_landmark_status(
-                lm->get_id())) {
-            case lm_reached:
-                break;
-            case lm_not_reached:
-            case lm_needed_again:
-                h += lm->min_cost;
-                break;
+        for (int id = 0; id < lgraph->number_of_landmarks(); ++id) {
+            landmark_status status =
+                lm_status_manager->get_landmark_status(id);
+            if (status == lm_not_reached || status == lm_needed_again) {
+                h += lgraph->get_lm_for_index(id)->min_cost;
             }
         }
         return h;
