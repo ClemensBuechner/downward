@@ -46,6 +46,15 @@ exp.add_parser(exp.SINGLE_SEARCH_PARSER)
 exp.add_step("build", exp.build)
 exp.add_step("start", exp.start_runs)
 exp.add_fetcher(name="fetch")
+exp.add_report(common_setup.ComparativeReport(
+    algorithm_pairs=[
+        ("issue988-base-seq-opt-bjolp", "issue1000-v1-seq-opt-bjolp"),
+        ("issue988-base-seq-opt-bjolp", "issue1000-v2-seq-opt-bjolp"),
+        ("issue988-base-seq-opt-bjolp", "issue1000-v3-seq-opt-bjolp"),
+        ("issue988-base-seq-opt-bjolp", "issue1000-v4-seq-opt-bjolp"),
+        ("issue988-base-seq-opt-bjolp", "issue1000-v5-seq-opt-bjolp"),
+    ], attributes=IssueExperiment.DEFAULT_TABLE_ATTRIBUTES,
+))
 exp.add_comparison_table_step()
 
 exp.run_steps()

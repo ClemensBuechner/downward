@@ -47,7 +47,16 @@ exp.add_parser(exp.SINGLE_SEARCH_PARSER)
 exp.add_step("build", exp.build)
 exp.add_step("start", exp.start_runs)
 exp.add_fetcher(name="fetch")
-exp.add_comparison_table_step()
+exp.add_report(common_setup.ComparativeReport(
+    algorithm_pairs=[
+        ("issue988-base-lama-first", "issue1000-v1-lama-first"),
+        ("issue988-base-lama-first", "issue1000-v2-lama-first"),
+        ("issue988-base-lama-first", "issue1000-v3-lama-first"),
+        ("issue988-base-lama-first", "issue1000-v4-lama-first"),
+        ("issue988-base-lama-first", "issue1000-v5-lama-first"),
+    ], attributes=IssueExperiment.DEFAULT_TABLE_ATTRIBUTES,
+
+))
 exp.add_scatter_plot_step(relative=True, attributes=["total_time"])
 
 exp.run_steps()
