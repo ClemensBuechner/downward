@@ -69,15 +69,16 @@ void LandmarkStatusManager::set_landmarks_for_initial_state(
                  << num_goal_lms << " goal landmarks" << endl;
 }
 
-bool LandmarkStatusManager::update_reached_lms(const State &parent_ancestor_state,
-                                               OperatorID,
-                                               const State &ancestor_state) {
+bool LandmarkStatusManager::update_reached_lms(
+    const State &parent_ancestor_state, OperatorID,
+    const State &ancestor_state) {
     if (ancestor_state == parent_ancestor_state) {
         // This can happen, e.g., in Satellite-01.
         return false;
     }
 
-    const BitsetView parent_reached = get_reached_landmarks(parent_ancestor_state);
+    const BitsetView parent_reached =
+        get_reached_landmarks(parent_ancestor_state);
     BitsetView reached = get_reached_landmarks(ancestor_state);
 
     int num_landmarks = lm_graph.get_num_landmarks();
@@ -139,9 +140,9 @@ bool LandmarkStatusManager::dead_end_exists() {
           Some action A has X as a delete effect. Then using this,
           we can detect that applying A leads to a dead-end.
 
-          Note: this only tests for reachability of the landmark from the initial state.
-          A (possibly) more effective option would be to test reachability of the landmark
-          from the current state.
+          Note: this only tests for reachability of the landmark from the
+          initial state. A (possibly) more effective option would be to test
+          reachability of the landmark from the current state.
         */
 
         if (!node->is_derived) {
