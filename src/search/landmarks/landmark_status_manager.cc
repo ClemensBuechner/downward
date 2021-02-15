@@ -102,9 +102,7 @@ bool LandmarkStatusManager::update_reached_lms(const State &parent_ancestor_stat
         if (!reached.test(id)) {
             LandmarkNode *node = lm_graph.get_landmark(id);
             if (node->is_true_in_state(ancestor_state)) {
-                if (landmark_is_leaf(*node, reached)) {
-                    reached.set(id);
-                }
+                reached.set(id);
             }
         }
     }
@@ -164,7 +162,7 @@ bool LandmarkStatusManager::landmark_needed_again(
     int id, const State &state) {
     LandmarkNode *node = lm_graph.get_landmark(id);
     if (node->is_true_in_state(state)) {
-        return false;
+        return has_unreached_parent(*node);
     } else if (node->is_true_in_goal) {
         return true;
     } else {
@@ -179,20 +177,19 @@ bool LandmarkStatusManager::landmark_needed_again(
                 return true;
             }
         }
-        return false;
+        return has_unreached_parent(*node);
     }
 }
 
-bool LandmarkStatusManager::landmark_is_leaf(const LandmarkNode &node,
-                                             const BitsetView &reached) const {
-    //Note: this is the same as !check_node_orders_disobeyed
+bool LandmarkStatusManager::has_unreached_parent(
+    const LandmarkNode &node) const {
     for (const auto &parent : node.parents) {
-        LandmarkNode *parent_node = parent.first;
-        // Note: no condition on edge type here
-        if (!reached.test(parent_node->get_id())) {
-            return false;
+        if (lm_status[parent.first->get_id()] == lm_not_reached) {
+            // This cannot occur for natural orderings by definition.
+            assert(parent.second < EdgeType::NATURAL);
+            return true;
         }
     }
-    return true;
+    return false;
 }
 }
