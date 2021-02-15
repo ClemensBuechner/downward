@@ -47,7 +47,7 @@ void LandmarkGraph::log_num_landmarks() const {
 }
 
 void LandmarkGraph::log_num_edges() const {
-    unordered_map<EdgeType, int> num_edges;
+    map<EdgeType, int> num_edges;
     int total = 0;
     for (auto &node : nodes) {
         total += node->children.size();
