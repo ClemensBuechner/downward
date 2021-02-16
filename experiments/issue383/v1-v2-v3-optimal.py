@@ -59,7 +59,7 @@ if common_setup.is_test_run() or not common_setup.is_running_on_cluster():
     SUITE = IssueExperiment.DEFAULT_TEST_SUITE
     ENVIRONMENT = LocalEnvironment(processes=2)
 else:
-    SUITE = common_setup.DEFAULT_SATISFICING_SUITE
+    SUITE = common_setup.DEFAULT_OPTIMAL_SUITE
     ENVIRONMENT = BaselSlurmEnvironment(
         partition="infai_2",
         email="clemens.buechner@unibas.ch",
