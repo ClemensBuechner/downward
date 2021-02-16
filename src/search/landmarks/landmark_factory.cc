@@ -343,7 +343,7 @@ void LandmarkFactory::approximate_reasonable_orders(
             for (auto &node2_p : lm_graph->get_nodes()) {
                 if (node2_p == node_p || node2_p->disjunctive ||
                     (node_p->is_true_in_state(initial_state)
-                        && node2_p->is_true_in_state(initial_state)))
+                     && node2_p->is_true_in_state(initial_state)))
                     continue;
                 if (interferes(task_proxy, node2_p.get(), node_p.get())) {
                     edge_add(*node2_p, *node_p, EdgeType::REASONABLE);
