@@ -108,4 +108,6 @@ exp.add_step("start", exp.start_runs)
 exp.add_fetcher(name="fetch")
 exp.add_step("comparison table", make_comparison_table)
 
+exp.add_parse_again_step()
+
 exp.run_steps()

@@ -79,11 +79,14 @@ exp.add_suite(BENCHMARKS_DIR, SUITE)
 exp.add_parser(exp.EXITCODE_PARSER)
 exp.add_parser(exp.PLANNER_PARSER)
 exp.add_parser(exp.ANYTIME_SEARCH_PARSER)
+exp.add_parser(exp.SINGLE_SEARCH_PARSER)
 exp.add_parser("landmark_parser.py")
 
 exp.add_step("build", exp.build)
 exp.add_step("start", exp.start_runs)
 exp.add_fetcher(name="fetch")
 exp.add_step("comparison table", make_comparison_table)
+
+exp.add_parse_again_step()
 
 exp.run_steps()

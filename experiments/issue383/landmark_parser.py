@@ -8,20 +8,25 @@ parser = Parser()
 parser.add_pattern(
     "landmarks", r"Discovered (\d+) landmarks, of which \d+ are simple, \d+ are disjunctive, and \d+ are conjunctive.")
 parser.add_pattern(
-    "simple_landmarks",
+    "landmarks_simple",
     r"Discovered \d+ landmarks, of which (\d+) are simple, \d+ are disjunctive, and \d+ are conjunctive")
 parser.add_pattern(
-    "disjunctive_landmarks",
+    "landmarks_disjunctive",
     r"Discovered \d+ landmarks, of which \d+ are simple, (\d+) are disjunctive, and \d+ are conjunctive.")
 parser.add_pattern(
-    "conjunctive_landmarks",
+    "landmarks_conjunctive",
     r"Discovered \d+ landmarks, of which \d+ are simple, \d+ are disjunctive, and (\d+) are conjunctive.")
 
 parser.add_pattern("orderings", r"Discovered (\d+) landmark orderings.")
-parser.add_pattern("natural_orders", r"Found (\d+) natural landmark orderings.")
-parser.add_pattern("greedy_necessary_orders", r"Found (\d+) greedy-necessary landmark orderings.")
-parser.add_pattern("necessary_orders", r"Found (\d+) necessary landmark orderings.")
-parser.add_pattern("reasonable_orders", r"Found (\d+) reasonable landmark orderings.")
-parser.add_pattern("obedient_reasonable_orders", r"Found (\d+) obedient-reasonable landmark orderings.")
+parser.add_pattern("orderings_natural", 
+                   r"Found (\d+) natural landmark orderings.")
+parser.add_pattern("orderings_greedy_necessary", 
+                   r"Found (\d+) greedy-necessary landmark orderings.")
+parser.add_pattern("orderings_necessary", 
+                   r"Found (\d+) necessary landmark orderings.")
+parser.add_pattern("orderings_reasonable", 
+                   r"Found (\d+) reasonable landmark orderings.")
+parser.add_pattern("orderings_obedient_reasonable", 
+                   r"Found (\d+) obedient-reasonable landmark orderings.")
 
 parser.parse()
