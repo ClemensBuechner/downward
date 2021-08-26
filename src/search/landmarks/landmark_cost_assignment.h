@@ -20,8 +20,9 @@ protected:
     const LandmarkGraph &lm_graph;
     const std::vector<int> operator_costs;
 
-    const std::set<int> &get_achievers(int lmn_status,
-                                       const Landmark &landmark) const;
+    const std::set<int> &get_achievers(
+        const LandmarkStatusManager &status_manager,
+        const LandmarkNode &lm_node);
 public:
     LandmarkCostAssignment(const std::vector<int> &operator_costs,
                            const LandmarkGraph &graph);
