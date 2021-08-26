@@ -23,16 +23,18 @@ LandmarkCostAssignment::LandmarkCostAssignment(
 }
 
 const set<int> &LandmarkCostAssignment::get_achievers(
-    int lmn_status, const Landmark &landmark) const {
+    const LandmarkStatusManager &status_manager,
+    const LandmarkNode &lm_node) {
     // Return relevant achievers of the landmark according to its status.
-    if (lmn_status == lm_not_reached)
-        return landmark.first_achievers;
-    else if (lmn_status == lm_needed_again)
-        return landmark.possible_achievers;
-    else
+    int lm_id = lm_node.get_id();
+    if (!status_manager.landmark_accepted(lm_id)) {
+        return lm_node.get_landmark().first_achievers;
+    } else if (status_manager.landmark_required(lm_id)) {
+        return lm_node.get_landmark().possible_achievers;
+    } else {
         return empty;
+    }
 }
-
 
 // Uniform cost partioning
 LandmarkUniformSharedCostAssignment::LandmarkUniformSharedCostAssignment(
@@ -56,11 +58,9 @@ double LandmarkUniformSharedCostAssignment::cost_sharing_h_value(
        compute which op achieves how many landmarks. Along the way,
        mark action landmarks and add their cost to h. */
     for (auto &node : nodes) {
-        int lmn_status =
-            lm_status_manager.get_landmark_status(node->get_id());
-        if (lmn_status != lm_reached) {
+        if (lm_status_manager.landmark_required(node->get_id())) {
             const set<int> &achievers =
-                get_achievers(lmn_status, node->get_landmark());
+                get_achievers(lm_status_manager, *node);
             assert(!achievers.empty());
             if (use_action_landmarks && achievers.size() == 1) {
                 // We have found an action landmark for this state.
@@ -89,11 +89,9 @@ double LandmarkUniformSharedCostAssignment::cost_sharing_h_value(
        an action landmark; decrease the counters accordingly
        so that no unnecessary cost is assigned to these landmarks. */
     for (auto &node : nodes) {
-        int lmn_status =
-            lm_status_manager.get_landmark_status(node->get_id());
-        if (lmn_status != lm_reached) {
+        if (lm_status_manager.landmark_required(node->get_id())) {
             const set<int> &achievers =
-                get_achievers(lmn_status, node->get_landmark());
+                get_achievers(lm_status_manager, *node);
             bool covered_by_action_lm = false;
             for (int op_id : achievers) {
                 assert(utils::in_bounds(op_id, action_landmarks));
@@ -117,10 +115,8 @@ double LandmarkUniformSharedCostAssignment::cost_sharing_h_value(
        count shared costs for the remaining landmarks. */
     for (const LandmarkNode *node : relevant_lms) {
         // TODO: Iterate over Landmarks instead of LandmarkNodes
-        int lmn_status =
-            lm_status_manager.get_landmark_status(node->get_id());
         const set<int> &achievers =
-            get_achievers(lmn_status, node->get_landmark());
+            get_achievers(lm_status_manager, *node);
         double min_cost = numeric_limits<double>::max();
         for (int op_id : achievers) {
             assert(utils::in_bounds(op_id, achieved_lms_by_op));
@@ -183,7 +179,7 @@ double LandmarkEfficientOptimalSharedCostAssignment::cost_sharing_h_value(
     */
     int num_cols = lm_graph.get_num_landmarks();
     for (int lm_id = 0; lm_id < num_cols; ++lm_id) {
-        if (lm_status_manager.get_landmark_status(lm_id) == lm_reached) {
+        if (!lm_status_manager.landmark_required(lm_id)) {
             lp.get_variables()[lm_id].upper_bound = 0;
         } else {
             lp.get_variables()[lm_id].upper_bound = lp_solver.get_infinity();
@@ -203,11 +199,10 @@ double LandmarkEfficientOptimalSharedCostAssignment::cost_sharing_h_value(
         constraint.clear();
     }
     for (int lm_id = 0; lm_id < num_cols; ++lm_id) {
-        const Landmark &landmark = lm_graph.get_node(lm_id)->get_landmark();
-        int lm_status = lm_status_manager.get_landmark_status(lm_id);
-        if (lm_status != lm_reached) {
+        const LandmarkNode *lm_node = lm_graph.get_node(lm_id);
+        if (lm_status_manager.landmark_required(lm_id)) {
             const set<int> &achievers =
-                get_achievers(lm_status, landmark);
+                get_achievers(lm_status_manager, *lm_node);
             assert(!achievers.empty());
             for (int op_id : achievers) {
                 assert(utils::in_bounds(op_id, lp_constraints));
