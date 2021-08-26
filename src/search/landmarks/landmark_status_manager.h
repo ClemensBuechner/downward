@@ -19,6 +19,9 @@ class LandmarkStatusManager {
 
     LandmarkGraph &lm_graph;
 
+    void collect_needed_again_relatives(
+        const LandmarkNode *node, const State &state);
+
     bool landmark_is_leaf(const LandmarkNode &node,
                           const BitsetView &accepted) const;
     bool landmark_needed_again(int id, const State &state);
