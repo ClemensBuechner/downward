@@ -77,7 +77,7 @@ bool LandmarkStatusManager::update_accepted_landmarks(
             /* TODO: It may be very inefficient to check this for all landmarks
                 separately (and potentially multiple times?). */
             if (!lm_graph.get_node(id)->get_landmark().is_true_in_state(
-                ancestor_state)) {
+                    ancestor_state)) {
                 accepted.reset(id);
             }
         }
