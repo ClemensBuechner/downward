@@ -11,9 +11,11 @@ namespace landmarks {
   By default we mark all landmarks as accepted, since we do an intersection when
   computing new landmark information.
 */
-LandmarkStatusManager::LandmarkStatusManager(LandmarkGraph &graph)
+LandmarkStatusManager::LandmarkStatusManager(
+    LandmarkGraph &graph, bool use_reasonable_orders)
     : accepted_lms(vector<bool>(graph.get_num_landmarks(), true)),
       lm_status(graph.get_num_landmarks(), lm_not_accepted),
+      use_reasonable_orders(use_reasonable_orders),
       lm_graph(graph) {
 }
 
@@ -102,17 +104,19 @@ void LandmarkStatusManager::collect_needed_again_relatives(
         }
     }
 
-    /*
-      For all A -r-> B where A is not first added but B is, B must be
-      destroyed to achieve A (definition of reasonable orderings).
-      Therefore, B is needed again.
-    */
-    for (auto &edge: node->children) {
-        const LandmarkNode *child = edge.first;
-        int child_id = child->get_id();
-        if (edge.second == EdgeType::REASONABLE
-            && lm_status[child_id == lm_accepted]) {
-            lm_status[child_id] = lm_needed_again;
+    if (use_reasonable_orders) {
+        /*
+          For all A -r-> B where A is not first added but B is, B must
+          be destroyed to achieve A (definition of reasonable
+          orderings). Hence, B is needed again.
+        */
+        for (auto &edge: node->children) {
+            const LandmarkNode *child = edge.first;
+            int child_id = child->get_id();
+            if (edge.second == EdgeType::REASONABLE
+                && lm_status[child_id == lm_accepted]) {
+                lm_status[child_id] = lm_needed_again;
+            }
         }
     }
 }

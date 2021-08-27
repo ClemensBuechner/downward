@@ -79,7 +79,8 @@ LandmarkCountHeuristic::LandmarkCountHeuristic(const options::Options &opts)
                  << " are conjunctive." << endl;
     utils::g_log << "Landmark graph contains " << lgraph->get_num_edges()
                  << " orderings." << endl;
-    lm_status_manager = utils::make_unique_ptr<LandmarkStatusManager>(*lgraph);
+    lm_status_manager = utils::make_unique_ptr<LandmarkStatusManager>(
+        *lgraph, lm_graph_factory->computes_reasonable_orders());
 
     if (admissible) {
         if (opts.get<bool>("optimal")) {

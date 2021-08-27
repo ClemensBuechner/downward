@@ -16,6 +16,7 @@ enum landmark_status {
 class LandmarkStatusManager {
     PerStateBitset accepted_lms;
     std::vector<landmark_status> lm_status;
+    bool use_reasonable_orders;
 
     LandmarkGraph &lm_graph;
 
@@ -26,7 +27,8 @@ class LandmarkStatusManager {
                           const BitsetView &accepted) const;
     bool landmark_needed_again(int id, const State &state);
 public:
-    explicit LandmarkStatusManager(LandmarkGraph &graph);
+    explicit LandmarkStatusManager(
+        LandmarkGraph &graph, bool use_reasonable_orders);
 
     BitsetView get_accepted_landmarks(const State &state);
 
