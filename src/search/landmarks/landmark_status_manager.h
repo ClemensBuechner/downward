@@ -16,9 +16,13 @@ class LandmarkStatusManager {
     std::vector<landmark_status> lm_status;
 
     LandmarkGraph &lm_graph;
+    std::vector<int> landmarks_with_empty_first_achievers;
+    std::vector<int> landmarks_with_empty_possible_achievers;
 
     bool landmark_is_leaf(const LandmarkNode &node, const BitsetView &reached) const;
     bool landmark_needed_again(int id, const State &state);
+
+    void compute_dead_end_candidates();
 public:
     explicit LandmarkStatusManager(LandmarkGraph &graph);
 
