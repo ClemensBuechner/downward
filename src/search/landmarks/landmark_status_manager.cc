@@ -145,6 +145,17 @@ void LandmarkStatusManager::update_lm_status(const State &ancestor_state) {
 }
 
 bool LandmarkStatusManager::dead_end_exists() {
+    /*
+      This dead-end detection works for the following case:
+      X is a goal, it is true in the initial state, and has no achievers.
+      Some action A has X as delete effect. Then using this, we can
+      detect that applying A leads to a dead-end.
+
+      Note: this only tests for reachability of the landmark from the
+      initial state. A (possibly) more effective option would be to test
+      reachability of the landmark from the current state.
+    */
+
     if (any_of(landmarks_with_empty_first_achievers.begin(),
                landmarks_with_empty_first_achievers.end(), [=](int id) {
             return lm_status[id] == lm_not_reached;
@@ -158,33 +169,6 @@ bool LandmarkStatusManager::dead_end_exists() {
         return true;
     };
     return false;
-    //for (auto &node : lm_graph.get_nodes()) {
-    //    int id = node->get_id();
-    //
-    //    /*
-    //      This dead-end detection works for the following case:
-    //      X is a goal, it is true in the initial state, and has no achievers.
-    //      Some action A has X as a delete effect. Then using this,
-    //      we can detect that applying A leads to a dead-end.
-    //
-    //      Note: this only tests for reachability of the landmark from the initial state.
-    //      A (possibly) more effective option would be to test reachability of the landmark
-    //      from the current state.
-    //    */
-    //
-    //    const Landmark &landmark = node->get_landmark();
-    //    if (!landmark.is_derived) {
-    //        if ((lm_status[id] == lm_not_reached) &&
-    //            landmark.first_achievers.empty()) {
-    //            return true;
-    //        }
-    //        if ((lm_status[id] == lm_needed_again) &&
-    //            landmark.possible_achievers.empty()) {
-    //            return true;
-    //        }
-    //    }
-    //}
-    //return false;
 }
 
 bool LandmarkStatusManager::landmark_needed_again(
