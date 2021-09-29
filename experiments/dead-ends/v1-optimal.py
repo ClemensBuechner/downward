@@ -12,7 +12,7 @@ from lab.environments import LocalEnvironment, BaselSlurmEnvironment
 
 REVISIONS = [
     "936c3d507",
-    "f01d05cfd",
+    "3316e0e99",
 ]
 
 CONFIGS = [
