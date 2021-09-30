@@ -74,7 +74,8 @@ void LandmarkStatusManager::compute_dead_end_candidates() {
             if (landmark.first_achievers.empty()) {
                 landmarks_with_empty_first_achievers.push_back(
                     node->get_id());
-            } else if (landmark.possible_achievers.empty()) {
+            }
+            if (landmark.possible_achievers.empty()) {
                 landmarks_with_empty_possible_achievers.push_back(
                     node->get_id());
             }
@@ -82,10 +83,9 @@ void LandmarkStatusManager::compute_dead_end_candidates() {
     }
 }
 
-bool
-LandmarkStatusManager::update_reached_lms(const State &parent_ancestor_state,
-                                          OperatorID,
-                                          const State &ancestor_state) {
+bool LandmarkStatusManager::update_reached_lms(
+    const State &parent_ancestor_state, OperatorID,
+    const State &ancestor_state) {
     if (ancestor_state == parent_ancestor_state) {
         // This can happen, e.g., in Satellite-01.
         return false;
