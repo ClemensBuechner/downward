@@ -79,8 +79,7 @@ LandmarkCountHeuristic::LandmarkCountHeuristic(const options::Options &opts)
                  << " are conjunctive." << endl;
     utils::g_log << "Landmark graph contains " << lgraph->get_num_edges()
                  << " orderings." << endl;
-    lm_status_manager = utils::make_unique_ptr<LandmarkStatusManager>(
-        *lgraph, lm_graph_factory->computes_reasonable_orders());
+    lm_status_manager = utils::make_unique_ptr<LandmarkStatusManager>(*lgraph);
 
     if (admissible) {
         if (opts.get<bool>("optimal")) {
@@ -124,7 +123,7 @@ int LandmarkCountHeuristic::get_heuristic_value(const State &ancestor_state) {
     } else {
         int h = 0;
         for (int id = 0; id < lgraph->get_num_landmarks(); ++id) {
-            if (lm_status_manager->landmark_required(id)) {
+            if (lm_status_manager->get_landmark_status(id) != REACHED) {
                 h += lgraph->get_node(id)->get_landmark().cost;
             }
         }
@@ -141,8 +140,8 @@ int LandmarkCountHeuristic::compute_heuristic(const State &ancestor_state) {
     int h = get_heuristic_value(ancestor_state);
 
     if (use_preferred_operators) {
-        BitsetView landmark_info = lm_status_manager->get_accepted_landmarks(
-            ancestor_state);
+        BitsetView landmark_info =
+            lm_status_manager->get_reached_landmarks(ancestor_state);
         LandmarkNodeSet reached_lms = convert_to_landmark_set(landmark_info);
         generate_helpful_actions(state, reached_lms);
     }
@@ -228,7 +227,7 @@ void LandmarkCountHeuristic::notify_initial_state(const State &initial_state) {
 
 void LandmarkCountHeuristic::notify_state_transition(
     const State &parent_state, OperatorID op_id, const State &state) {
-    lm_status_manager->update_accepted_landmarks(parent_state, op_id, state);
+    lm_status_manager->update_reached_landmarks(parent_state, op_id, state);
     if (cache_evaluator_values) {
         /* TODO:  It may be more efficient to check that the reached landmark
            set has actually changed and only then mark the h value as dirty. */
