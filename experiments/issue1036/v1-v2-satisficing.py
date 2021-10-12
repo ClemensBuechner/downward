@@ -12,12 +12,19 @@ from lab.reports import Attribute, geometric_mean
 from lab.environments import LocalEnvironment, BaselSlurmEnvironment
 
 REVISIONS = [
-    "issue383-hsdip-base",
-    "issue383-hsdip-v1",
+    "issue1036-base",
+    "issue1036-v1",
+    "issue1036-v2",
 ]
 
 CONFIGS = [
-    IssueConfig("lama", [], driver_options=["--alias", "lama"]),
+    IssueConfig("lama-first", [], driver_options=["--alias", "lama-first"]),
+    IssueConfig("lama-first-pref", [
+        "--evaluator",
+        "hlm=lmcount(lm_factory=lm_reasonable_orders_hps(lm_rhw()),transform=adapt_costs(one),pref=true)",
+        "--evaluator", "hff=ff(transform=adapt_costs(one))", "--search",
+         "lazy_greedy([hff,hlm],preferred=[hff,hlm], cost_type=one,reopen_closed=false)"]),
+    IssueConfig("lm_zg", ["--search", "eager_greedy([lmcount(lm_zg())])"]),
 ]
 
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
@@ -46,6 +53,7 @@ exp.add_suite(BENCHMARKS_DIR, SUITE)
 exp.add_parser(exp.ANYTIME_SEARCH_PARSER)
 exp.add_parser(exp.EXITCODE_PARSER)
 exp.add_parser(exp.PLANNER_PARSER)
+exp.add_parser(exp.SINGLE_SEARCH_PARSER)
 exp.add_parser("landmark_parser.py")
 
 ATTRIBUTES = IssueExperiment.DEFAULT_TABLE_ATTRIBUTES + [
