@@ -150,15 +150,15 @@ void LandmarkStatusManager::update_lm_status(const State &ancestor_state) {
     }
     for (int id = 0; id < num_landmarks; ++id) {
         LandmarkNode *node = lm_graph.get_node(id);
-        if (lm_status[id] == REACHED) {
+        LandmarkStatus status = lm_status[id];
+        if (status == NOT_REACHED) {
+            mark_needed_again_relatives(node, ancestor_state);
+        } else if (status == REACHED) {
             Landmark &landmark = node->get_landmark();
             if (landmark.is_true_in_goal
                 && landmark.is_true_in_state(ancestor_state)) {
                 lm_status[id] = NEEDED_AGAIN;
             }
-        } else {
-            assert(lm_status[id] == NOT_REACHED);
-            mark_needed_again_relatives(node, ancestor_state);
         }
     }
 }

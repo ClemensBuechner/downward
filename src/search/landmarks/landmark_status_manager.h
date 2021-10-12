@@ -9,11 +9,11 @@ namespace landmarks {
 class LandmarkGraph;
 class LandmarkNode;
 
-enum landmark_status {REACHED = 0, NOT_REACHED = 1, NEEDED_AGAIN = 2};
+enum LandmarkStatus {REACHED = 0, NOT_REACHED = 1, NEEDED_AGAIN = 2};
 
 class LandmarkStatusManager {
     PerStateBitset reached_lms;
-    std::vector<landmark_status> lm_status;
+    std::vector<LandmarkStatus> lm_status;
 
     LandmarkGraph &lm_graph;
     const bool consider_reasonable_orders;
@@ -47,7 +47,7 @@ public:
       desired state is returned at all times, or an error is thrown
       if the desired information does not exist.
      */
-    landmark_status get_landmark_status(size_t id) const {
+    LandmarkStatus get_landmark_status(size_t id) const {
         assert(utils::in_bounds(id, lm_status));
         return lm_status[id];
     }
