@@ -346,6 +346,45 @@ class IssueExperiment(FastDownwardExperiment):
         self.add_step(
             "publish-comparison-tables", publish_comparison_tables)
 
+    def add_multi_comparison_table_step(self, pairs, **kwargs):
+        """Add a step that makes pairwise revision comparisons.
+
+        Create one comparative report for all specified pairs of
+        configurations. Each pair of corresponding runs is listed
+        by the two absolute attribute values and their difference
+        for all attributes in kwargs["attributes"].
+
+        All *kwargs* will be passed to the CompareConfigsReport class.
+        If the keyword argument *attributes* is not specified, a
+        default list of attributes is used. ::
+
+            exp.add_multi_comparison_table_step(
+                [
+                    ("issue1036-lama-base", "issue1036-lama-v1"),
+                    ("issue1036-lama-base", "issue1036-lama-v2"),
+                ],
+                attributes=["coverage"]
+            )
+            exp.add_comparison_table_step(attributes=["coverage"])
+
+        """
+        kwargs.setdefault("attributes", self.DEFAULT_TABLE_ATTRIBUTES)
+
+        def make_comparison_tables():
+            report = ComparativeReport(algorithm_pairs=pairs, **kwargs)
+            outfile = os.path.join(
+                self.eval_dir,
+                "%s-compare.%s" % (self.name, report.output_format))
+            report(self.eval_dir, outfile)
+
+        def publish_comparison_tables():
+            outfile = os.path.join(self.eval_dir, f"{self.name}-compare.html")
+            subprocess.call(["publish", outfile])
+
+        self.add_step("make-comparison-tables", make_comparison_tables)
+        self.add_step(
+            "publish-comparison-tables", publish_comparison_tables)
+
     def add_scatter_plot_step(self, relative=False, attributes=None, additional=[]):
         """Add step creating (relative) scatter plots for all revision pairs.
 

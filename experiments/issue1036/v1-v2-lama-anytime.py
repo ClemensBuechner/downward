@@ -57,10 +57,16 @@ ATTRIBUTES = IssueExperiment.DEFAULT_TABLE_ATTRIBUTES + [
     Attribute("lmgraph_generation_time", function=geometric_mean),
 ]
 
+pairs = []
+for config in CONFIGS:
+    base = REVISIONS[0] + "-" + config.nick
+    pairs.append((base, REVISIONS[1] + "-" + config.nick))
+    pairs.append((base, REVISIONS[2] + "-" + config.nick))
+
 exp.add_step("build", exp.build)
 exp.add_step("start", exp.start_runs)
 exp.add_fetcher(name="fetch")
-exp.add_comparison_table_step(attributes=ATTRIBUTES)
+exp.add_multi_comparison_table_step(pairs, attributes=ATTRIBUTES)
 exp.add_parse_again_step()
 
 exp.run_steps()
