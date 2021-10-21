@@ -156,7 +156,7 @@ void LandmarkStatusManager::update_lm_status(const State &ancestor_state) {
         } else if (status == REACHED) {
             Landmark &landmark = node->get_landmark();
             if (landmark.is_true_in_goal
-                && landmark.is_true_in_state(ancestor_state)) {
+                && !landmark.is_true_in_state(ancestor_state)) {
                 lm_status[id] = NEEDED_AGAIN;
             }
         }
