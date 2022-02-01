@@ -165,7 +165,7 @@ int LandmarkFactoryRpgSasp::min_cost_for_landmark(
       with "astar(lmcount(lm_rhw()))" on mystery/prob07.pddl in debug mode.
       See issue 467
     */
-    assert(min_cost < numeric_limits<int>::max());
+    //assert(min_cost < numeric_limits<int>::max());
     return min_cost;
 }
 
