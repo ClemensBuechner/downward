@@ -39,16 +39,9 @@ class LandmarkCountHeuristic : public Heuristic {
 
     int get_heuristic_value(const State &ancestor_state);
 
-    bool check_node_orders_disobeyed(
-        const LandmarkNode &node, const LandmarkNodeSet &reached) const;
-
-    void add_node_children(LandmarkNode &node,
-                           const LandmarkNodeSet &reached) const;
-
-    bool landmark_is_interesting(
-        const State &state, const LandmarkNodeSet &reached, LandmarkNode &lm_node) const;
-    bool generate_helpful_actions(
-        const State &state, const LandmarkNodeSet &reached);
+    bool landmark_is_interesting(const State &state,
+                                 LandmarkNode &lm_node) const;
+    bool generate_helpful_actions(const State &state);
 
     LandmarkNodeSet convert_to_landmark_set(const BitsetView &landmark_bitset);
 
