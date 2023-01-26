@@ -32,7 +32,7 @@ CONFIGS = [
                  f"hlm1=lmcount(lm_reasonable_orders_hps(lm_rhw()),transform=adapt_costs(one),pref=true,all_landmarks_interesting={all_interesting})",
                  "--evaluator", "hff1=ff(transform=adapt_costs(one))",
                  "--evaluator",
-                 f"hlmf2=lmcount(lm_reasonable_orders_hps(lm_rhw()),transform=adapt_costs(plusone),pref=true,all_landmarks_interesting={all_interesting})",
+                 f"hlm2=lmcount(lm_reasonable_orders_hps(lm_rhw()),transform=adapt_costs(plusone),pref=true,all_landmarks_interesting={all_interesting})",
                  "--evaluator", "hff2=ff(transform=adapt_costs(plusone))",
                  "--search", """iterated([
                          lazy_greedy([hff1,hlm1],preferred=[hff1,hlm1],
