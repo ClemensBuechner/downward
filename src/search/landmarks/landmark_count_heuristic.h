@@ -15,10 +15,12 @@ class LandmarkGraph;
 class LandmarkNode;
 class LandmarkStatusManager;
 
+enum InterestingIf {LEGACY, FUTURE, PARENTS_REACHED};
+
 class LandmarkCountHeuristic : public Heuristic {
     std::shared_ptr<LandmarkGraph> lgraph;
     const bool use_preferred_operators;
-    const bool all_landmarks_interesting;
+    const InterestingIf interesting_landmarks;
     const bool conditional_effects_supported;
     const bool admissible;
     const bool dead_ends_reliable;
@@ -38,8 +40,9 @@ class LandmarkCountHeuristic : public Heuristic {
 
     int get_heuristic_value(const State &ancestor_state);
 
-    bool landmark_is_interesting(LandmarkNode &lm_node) const;
-    void generate_preferred_operators(const State &state);
+    bool landmark_is_interesting(const State &state, const BitsetView &reached,
+				 LandmarkNode &lm_node, bool all_lms_reached) const;
+    void generate_preferred_operators(const State &state, const BitsetView &reached);
 
     int get_min_cost_of_achievers(const std::set<int> &achievers,
                                   const TaskProxy &task_proxy);

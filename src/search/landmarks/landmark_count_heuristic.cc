@@ -30,7 +30,7 @@ namespace landmarks {
 LandmarkCountHeuristic::LandmarkCountHeuristic(const plugins::Options &opts)
     : Heuristic(opts),
       use_preferred_operators(opts.get<bool>("pref")),
-      all_landmarks_interesting(opts.get<bool>("all_landmarks_interesting")),
+      interesting_landmarks(opts.get<InterestingIf>("interesting_if")),
       conditional_effects_supported(
           opts.get<shared_ptr<LandmarkFactory>>("lm_factory")->supports_conditional_effects()),
       admissible(opts.get<bool>("admissible")),
@@ -200,13 +200,16 @@ int LandmarkCountHeuristic::compute_heuristic(const State &ancestor_state) {
     int h = get_heuristic_value(ancestor_state);
 
     if (use_preferred_operators) {
-        generate_preferred_operators(state);
+        BitsetView reached =
+            lm_status_manager->get_reached_landmarks(ancestor_state);
+        generate_preferred_operators(state, reached);
     }
 
     return h;
 }
 
-void LandmarkCountHeuristic::generate_preferred_operators(const State &state) {
+void LandmarkCountHeuristic::generate_preferred_operators(
+    const State &state, const BitsetView &reached) {
     /*
       Find operators that achieve landmark leaves. If a simple landmark can be
       achieved, prefer only operators that achieve simple landmarks. Otherwise,
@@ -223,6 +226,14 @@ void LandmarkCountHeuristic::generate_preferred_operators(const State &state) {
     vector<OperatorID> preferred_operators_simple;
     vector<OperatorID> preferred_operators_disjunctive;
 
+    bool all_landmarks_reached = true;
+    for (int i = 0; i < reached.size(); ++i) {
+        if (!reached.test(i)) {
+            all_landmarks_reached = false;
+            break;
+        }
+    }
+
     for (OperatorID op_id : applicable_operators) {
         OperatorProxy op = task_proxy.get_operators()[op_id];
         EffectsProxy effects = op.get_effects();
@@ -231,7 +242,8 @@ void LandmarkCountHeuristic::generate_preferred_operators(const State &state) {
                 continue;
             FactProxy fact_proxy = effect.get_fact();
             LandmarkNode *lm_node = lgraph->get_node(fact_proxy.get_pair());
-            if (lm_node && landmark_is_interesting(*lm_node)) {
+            if (lm_node && landmark_is_interesting(state, reached, *lm_node,
+                                                   all_landmarks_reached)) {
                 if (lm_node->get_landmark().disjunctive) {
                     preferred_operators_disjunctive.push_back(op_id);
                 } else {
@@ -254,30 +266,57 @@ void LandmarkCountHeuristic::generate_preferred_operators(const State &state) {
 }
 
 bool LandmarkCountHeuristic::landmark_is_interesting(
-    LandmarkNode &lm_node) const {
+  const State &state, const BitsetView &reached,
+  LandmarkNode &lm_node, bool all_lms_reached) const {
     landmark_status status =
         lm_status_manager->get_landmark_status(lm_node.get_id());
-    if (all_landmarks_interesting) {
+    bool is_interesting = false;
+    switch (interesting_landmarks) {
+    case LEGACY:
+	/*
+	We consider a landmark interesting in two (exclusive) cases:
+	(1) If all landmarks are reached and the landmark must hold in the goal
+	    but does not hold in the current state.
+	(2) If it has not been reached before and all its parents are reached.
+	*/
+
+	if (all_lms_reached) {
+	  const Landmark &landmark = lm_node.get_landmark();
+	  is_interesting = landmark.is_true_in_goal && !landmark.is_true_in_state(state);
+	} else {
+	  is_interesting = !reached.test(lm_node.get_id()) &&
+		 all_of(lm_node.parents.begin(), lm_node.parents.end(),
+			[&](const pair<LandmarkNode *, EdgeType> parent) {
+			    return reached.test(parent.first->get_id());
+			});
+	}
+	break;
+    case FUTURE:
         /*
           We consider a landmark interesting if it is a "future landmark", i.e.,
           either lm_not_reached or lm_needed_again (which simplifies to the
           negation of lm_reached).
         */
-        return status != lm_reached;
-    } else {
+        is_interesting = status != lm_reached;
+	break;
+    case PARENTS_REACHED:
         /*
-          We consider a landmark interesting if it is a "future landmark" and
+          We conside  a landmark interesting if it is a "future landmark" and
           all its parents are "past landmarks", i.e., the parents are either
           lm_reached or lm_needed_again (which simplifies to the negation of
           lm_not_reached).
         */
-        return status != lm_reached
+        is_interesting = status != lm_reached
             && all_of(lm_node.parents.begin(), lm_node.parents.end(),
                       [&](const pair<LandmarkNode *, EdgeType> parent) {
                           return lm_status_manager->get_landmark_status(
                               parent.first->get_id() != lm_not_reached);
                       });
+	break;
+    default:
+	break;
     }
+    return is_interesting;
 }
 
 void LandmarkCountHeuristic::notify_initial_state(const State &initial_state) {
@@ -357,12 +396,12 @@ static shared_ptr<Heuristic> _parse(OptionParser &parser) {
             "identify preferred operators (see OptionCaveats#Using_preferred_operators_"
             "with_the_lmcount_heuristic)",
             "false");
-        parser.add_option<bool>(
-            "all_landmarks_interesting",
-            "If true, all landmarks are considered interesting when computing "
-            "preferred operators. Otherwise, only those where all parents are "
-            "reached are interesting.",
-            "true");
+        vector<pair<string, string>> interesting_if = {{"legacy", ""}, {"future", ""}, {"parents_reached", ""}};
+        parser.add_enum_option<InterestingIf>(
+            "interesting_if",
+            interesting_if,
+            "documentation",
+            "legacy");
         parser.add_option<bool>("alm", "use action landmarks", "true");
         lp::add_lp_solver_option_to_parser(parser);
         Heuristic::add_options_to_parser(parser);
