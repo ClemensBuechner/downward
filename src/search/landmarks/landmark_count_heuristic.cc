@@ -228,10 +228,12 @@ void LandmarkCountHeuristic::generate_preferred_operators(
     vector<OperatorID> preferred_operators_disjunctive;
 
     bool all_landmarks_reached = true;
-    for (int i = 0; i < reached.size(); ++i) {
-        if (!reached.test(i)) {
-            all_landmarks_reached = false;
-            break;
+    if (interesting_landmarks == InterestingIf::LEGACY) {
+        for (int i = 0; i < reached.size(); ++i) {
+            if (!reached.test(i)) {
+                all_landmarks_reached = false;
+                break;
+            }
         }
     }
 
@@ -278,31 +280,33 @@ void LandmarkCountHeuristic::generate_preferred_operators(
 }
 
 bool LandmarkCountHeuristic::landmark_is_interesting(
-  const State &state, const BitsetView &reached,
-  LandmarkNode &lm_node, bool all_lms_reached) const {
+    const State &state, const BitsetView &reached,
+    LandmarkNode &lm_node, bool all_lms_reached) const {
     landmark_status status =
         lm_status_manager->get_landmark_status(lm_node.get_id());
     bool is_interesting = false;
     switch (interesting_landmarks) {
     case LEGACY:
-	/*
-	We consider a landmark interesting in two (exclusive) cases:
-	(1) If all landmarks are reached and the landmark must hold in the goal
-	    but does not hold in the current state.
-	(2) If it has not been reached before and all its parents are reached.
-	*/
+        /*
+          We consider a landmark interesting in two (exclusive) cases:
+          (1) If all landmarks are reached and the landmark must hold in the
+              goal but does not hold in the current state.
+          (2) If it has not been reached before and all its parents are reached.
+        */
 
-	if (all_lms_reached) {
-	  const Landmark &landmark = lm_node.get_landmark();
-	  is_interesting = landmark.is_true_in_goal && !landmark.is_true_in_state(state);
-	} else {
-	  is_interesting = !reached.test(lm_node.get_id()) &&
-		 all_of(lm_node.parents.begin(), lm_node.parents.end(),
-			[&](const pair<LandmarkNode *, EdgeType> parent) {
-			    return reached.test(parent.first->get_id());
-			});
-	}
-	break;
+        if (all_lms_reached) {
+            const Landmark &landmark = lm_node.get_landmark();
+            is_interesting =
+                landmark.is_true_in_goal && !landmark.is_true_in_state(state);
+        } else {
+            is_interesting =
+                !reached.test(lm_node.get_id())
+                    && all_of(lm_node.parents.begin(), lm_node.parents.end(),
+                              [&](const pair<LandmarkNode *, EdgeType> parent) {
+                                  return reached.test(parent.first->get_id());
+                              });
+        }
+        break;
     case FUTURE:
         /*
           We consider a landmark interesting if it is a "future landmark", i.e.,
@@ -310,7 +314,7 @@ bool LandmarkCountHeuristic::landmark_is_interesting(
           negation of lm_reached).
         */
         is_interesting = status != lm_reached;
-	break;
+	    break;
     case PARENTS_REACHED:
         /*
           We conside  a landmark interesting if it is a "future landmark" and
@@ -324,9 +328,9 @@ bool LandmarkCountHeuristic::landmark_is_interesting(
                           return lm_status_manager->get_landmark_status(
                               parent.first->get_id() != lm_not_reached);
                       });
-	break;
+	    break;
     default:
-	break;
+	    break;
     }
     return is_interesting;
 }
