@@ -20,6 +20,7 @@ enum InterestingIf {LEGACY, FUTURE, PARENTS_REACHED};
 class LandmarkCountHeuristic : public Heuristic {
     std::shared_ptr<LandmarkGraph> lgraph;
     const bool use_preferred_operators;
+    const bool simple_more_interesting;
     const InterestingIf interesting_landmarks;
     const bool conditional_effects_supported;
     const bool admissible;

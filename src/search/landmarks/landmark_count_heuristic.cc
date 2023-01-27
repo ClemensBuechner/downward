@@ -30,6 +30,7 @@ namespace landmarks {
 LandmarkCountHeuristic::LandmarkCountHeuristic(const plugins::Options &opts)
     : Heuristic(opts),
       use_preferred_operators(opts.get<bool>("pref")),
+      simple_more_interesting(opts.get<bool>("simple_more_interesting")),
       interesting_landmarks(opts.get<InterestingIf>("interesting_if")),
       conditional_effects_supported(
           opts.get<shared_ptr<LandmarkFactory>>("lm_factory")->supports_conditional_effects()),
@@ -254,11 +255,22 @@ void LandmarkCountHeuristic::generate_preferred_operators(
     }
 
     OperatorsProxy operators = task_proxy.get_operators();
-    if (preferred_operators_simple.empty()) {
+    if (simple_more_interesting) {
+        // Legacy version.
+        if (preferred_operators_simple.empty()) {
+            for (OperatorID op_id : preferred_operators_disjunctive) {
+                set_preferred(operators[op_id]);
+            }
+        } else {
+            for (OperatorID op_id : preferred_operators_simple) {
+                set_preferred(operators[op_id]);
+            }
+        }
+    } else {
+        // New and improved, maybe.
         for (OperatorID op_id : preferred_operators_disjunctive) {
             set_preferred(operators[op_id]);
         }
-    } else {
         for (OperatorID op_id : preferred_operators_simple) {
             set_preferred(operators[op_id]);
         }
@@ -402,6 +414,7 @@ static shared_ptr<Heuristic> _parse(OptionParser &parser) {
             interesting_if,
             "documentation",
             "legacy");
+        parser.add_option<bool>("simple_more_interesting", "", "true");
         parser.add_option<bool>("alm", "use action landmarks", "true");
         lp::add_lp_solver_option_to_parser(parser);
         Heuristic::add_options_to_parser(parser);
