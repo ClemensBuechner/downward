@@ -104,16 +104,15 @@ static bool contains(list<T> &alist, const T &val) {
 
 // find partial variable assignments with size m or less
 // (look at all the variables in the problem)
-void LandmarkFactoryHM::get_m_sets_(const VariablesProxy &variables, int num_included, int current_var,
+void LandmarkFactoryHM::get_m_sets_(const VariablesProxy &variables, int current_var,
                                     FluentSet &current,
                                     vector<FluentSet> &subsets) {
-    int num_variables = variables.size();
-    if (num_included == m_) {
+    if (static_cast<int>(current.size()) == m_) {
         subsets.push_back(current);
         return;
     }
-    if (current_var == num_variables) {
-        if (num_included != 0) {
+    if (current_var == static_cast<int>(variables.size())) {
+        if (!current.empty()) {
             subsets.push_back(current);
         }
         return;
@@ -131,28 +130,27 @@ void LandmarkFactoryHM::get_m_sets_(const VariablesProxy &variables, int num_inc
 
         if (use_var) {
             current.push_back(current_var_fact);
-            get_m_sets_(variables, num_included + 1, current_var + 1, current, subsets);
+            get_m_sets_(variables, current_var + 1, current, subsets);
             current.pop_back();
         }
     }
     // don't include a value of current_var in the set
-    get_m_sets_(variables, num_included, current_var + 1, current, subsets);
+    get_m_sets_(variables, current_var + 1, current, subsets);
 }
 
 // find all size m or less subsets of superset
 void LandmarkFactoryHM::get_m_sets_of_set(const VariablesProxy &variables,
-                                          int num_included,
                                           int current_var_index,
                                           FluentSet &current,
                                           vector<FluentSet> &subsets,
                                           const FluentSet &superset) {
-    if (num_included == m_) {
+    if (static_cast<int>(current.size()) == m_) {
         subsets.push_back(current);
         return;
     }
 
     if (current_var_index == static_cast<int>(superset.size())) {
-        if (num_included != 0) {
+        if (!current.empty()) {
             subsets.push_back(current);
         }
         return;
@@ -169,19 +167,18 @@ void LandmarkFactoryHM::get_m_sets_of_set(const VariablesProxy &variables,
     if (use_var) {
         // include current fluent in the set
         current.push_back(superset[current_var_index]);
-        get_m_sets_of_set(variables, num_included + 1, current_var_index + 1, current, subsets, superset);
+        get_m_sets_of_set(variables, current_var_index + 1, current, subsets, superset);
         current.pop_back();
     }
 
     // don't include current fluent in set
-    get_m_sets_of_set(variables, num_included, current_var_index + 1, current, subsets, superset);
+    get_m_sets_of_set(variables, current_var_index + 1, current, subsets, superset);
 }
 
 // get subsets of superset1 \cup superset2 with size m or less,
 // such that they have >= 1 elements from each set.
 void LandmarkFactoryHM::get_split_m_sets(
     const VariablesProxy &variables,
-    int ss1_num_included, int ss2_num_included,
     int ss1_var_index, int ss2_var_index,
     FluentSet &current, vector<FluentSet> &subsets,
     const FluentSet &superset1, const FluentSet &superset2) {
@@ -195,11 +192,10 @@ void LandmarkFactoryHM::get_split_m_sets(
     int sup1_size = superset1.size();
     int sup2_size = superset2.size();
 
-    if (ss1_num_included + ss2_num_included == m_ ||
+    if (static_cast<int>(current.size()) == m_ ||
         (ss1_var_index == sup1_size && ss2_var_index == sup2_size)) {
         // if set is empty, don't have to include from it
-        if ((ss1_num_included > 0 || sup1_size == 0) &&
-            (ss2_num_included > 0 || sup2_size == 0)) {
+        if (!current.empty()) {
             subsets.push_back(current);
         }
         return;
@@ -220,15 +216,13 @@ void LandmarkFactoryHM::get_split_m_sets(
         if (use_var) {
             // include
             current.push_back(superset1[ss1_var_index]);
-            get_split_m_sets(variables, ss1_num_included + 1, ss2_num_included,
-                             ss1_var_index + 1, ss2_var_index,
+            get_split_m_sets(variables, ss1_var_index + 1, ss2_var_index,
                              current, subsets, superset1, superset2);
             current.pop_back();
         }
 
         // don't include
-        get_split_m_sets(variables, ss1_num_included, ss2_num_included,
-                         ss1_var_index + 1, ss2_var_index,
+        get_split_m_sets(variables, ss1_var_index + 1, ss2_var_index,
                          current, subsets, superset1, superset2);
     } else {
         for (const FactPair &fluent : current) {
@@ -241,15 +235,13 @@ void LandmarkFactoryHM::get_split_m_sets(
         if (use_var) {
             // include
             current.push_back(superset2[ss2_var_index]);
-            get_split_m_sets(variables, ss1_num_included, ss2_num_included + 1,
-                             ss1_var_index, ss2_var_index + 1,
+            get_split_m_sets(variables, ss1_var_index, ss2_var_index + 1,
                              current, subsets, superset1, superset2);
             current.pop_back();
         }
 
         // don't include
-        get_split_m_sets(variables, ss1_num_included, ss2_num_included,
-                         ss1_var_index, ss2_var_index + 1,
+        get_split_m_sets(variables, ss1_var_index, ss2_var_index + 1,
                          current, subsets, superset1, superset2);
     }
 }
@@ -260,7 +252,7 @@ void LandmarkFactoryHM::get_split_m_sets(
 // get partial assignments of size <= m in the problem
 void LandmarkFactoryHM::get_m_sets(const VariablesProxy &variables, vector<FluentSet> &subsets) {
     FluentSet c;
-    get_m_sets_(variables, 0, 0, c, subsets);
+    get_m_sets_(variables, 0, c, subsets);
 }
 
 // get subsets of superset with size <= m
@@ -268,7 +260,7 @@ void LandmarkFactoryHM::get_m_sets(const VariablesProxy &variables,
                                    vector<FluentSet> &subsets,
                                    const FluentSet &superset) {
     FluentSet c;
-    get_m_sets_of_set(variables, 0, 0, c, subsets, superset);
+    get_m_sets_of_set(variables, 0, c, subsets, superset);
 }
 
 // second function to get subsets of size at most m that
@@ -279,7 +271,7 @@ void LandmarkFactoryHM::get_split_m_sets(
     vector<FluentSet> &subsets,
     const FluentSet &superset1, const FluentSet &superset2) {
     FluentSet c;
-    get_split_m_sets(variables, 0, 0, 0, 0, c, subsets, superset1, superset2);
+    get_split_m_sets(variables, 0, 0, c, subsets, superset1, superset2);
 }
 
 // get subsets of state with size <= m
