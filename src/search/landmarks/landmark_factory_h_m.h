@@ -107,7 +107,8 @@ class LandmarkFactoryHM : public LandmarkFactory {
     // second is unsat pcs for conditional noops
     std::vector<std::pair<int, std::vector<int>>> unsat_pc_count_;
 
-    void get_m_sets_(const VariablesProxy &variables, int current_var,
+    void get_m_sets_(const VariablesProxy &variables,
+                     int current_var,
                      FluentSet &current,
                      std::vector<FluentSet> &subsets);
 

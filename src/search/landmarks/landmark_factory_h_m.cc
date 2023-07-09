@@ -104,38 +104,36 @@ static bool contains(list<T> &alist, const T &val) {
 
 // find partial variable assignments with size m or less
 // (look at all the variables in the problem)
-void LandmarkFactoryHM::get_m_sets_(const VariablesProxy &variables, int current_var,
+void LandmarkFactoryHM::get_m_sets_(const VariablesProxy &variables,
+                                    int start_id,
                                     FluentSet &current,
                                     vector<FluentSet> &subsets) {
-    if (static_cast<int>(current.size()) == m_) {
+    int num_vars = static_cast<int>(variables.size());
+    if (start_id == num_vars && !current.empty()) {
         subsets.push_back(current);
-        return;
     }
-    if (current_var == static_cast<int>(variables.size())) {
-        if (!current.empty()) {
-            subsets.push_back(current);
-        }
-        return;
-    }
-    // include a value of current_var in the set
-    for (int i = 0; i < variables[current_var].get_domain_size(); ++i) {
-        bool use_var = true;
-        FactPair current_var_fact(current_var, i);
-        for (const FactPair &current_fact : current) {
-            if (!interesting(variables, current_var_fact, current_fact)) {
-                use_var = false;
-                break;
+    for (int id = start_id; id < num_vars; ++id) {
+        for (int val = 0; val < variables[id].get_domain_size(); ++val) {
+            bool use_var = true;
+            FactPair current_var_fact(id, val);
+            for (const FactPair &current_fact : current) {
+                if (!interesting(variables, current_var_fact, current_fact)) {
+                    use_var = false;
+                    break;
+                }
+            }
+
+            if (use_var) {
+                current.push_back(current_var_fact);
+                if (static_cast<int>(current.size()) == m_) {
+                    subsets.push_back(current);
+                } else {
+                    get_m_sets_(variables, id + 1, current, subsets);
+                }
+                current.pop_back();
             }
         }
-
-        if (use_var) {
-            current.push_back(current_var_fact);
-            get_m_sets_(variables, current_var + 1, current, subsets);
-            current.pop_back();
-        }
     }
-    // don't include a value of current_var in the set
-    get_m_sets_(variables, current_var + 1, current, subsets);
 }
 
 // find all size m or less subsets of superset
@@ -577,14 +575,20 @@ void LandmarkFactoryHM::initialize(const TaskProxy &task_proxy) {
     }
     // Get all the m or less size subsets in the domain.
     vector<vector<FactPair>> msets;
+    cout << "get_m_sets" << endl;
     get_m_sets(task_proxy.get_variables(), msets);
 
     // map each set to an integer
+    cout << "before for" << endl;
     for (size_t i = 0; i < msets.size(); ++i) {
+        if (i % 1000000 == 0) {
+            cout << i << endl;
+        }
         h_m_table_.emplace_back();
         set_indices_[msets[i]] = i;
         h_m_table_[i].fluents = msets[i];
     }
+    cout << "after for" << endl;
     if (log.is_at_least_normal()) {
         log << "Using " << h_m_table_.size() << " P^m fluents." << endl;
     }
