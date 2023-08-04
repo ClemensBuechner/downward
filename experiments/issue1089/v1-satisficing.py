@@ -20,20 +20,8 @@ REVISIONS = [
 GLOBAL_DRIVER_OPTIONS = ["--overall-time-limit", "5m"]
 BUILDS = ["release"]
 CONFIG_NICKS = [
-    # satisficing
     ("lama-first", [], ["--alias", "lama-first"]),
     ("lm_zg", ["--search", "eager_greedy([landmark_sum(lm_reasonable_orders_hps(lm_zg()))])"], []),
-    # optimal
-    ("lm-exhaust",
-     ["--evaluator", "lmc=landmark_cost_partitioning(lm_reasonable_orders_hps(lm_exhaust()), optimal=true)",
-      "--search", "astar(lmc,lazy_evaluator=lmc)"], []),
-    ("lm-hm2", ["--evaluator",
-                "lmc=landmark_cost_partitioning(lm_reasonable_orders_hps(lm_hm(m=2)))",
-                "--search", "astar(lmc,lazy_evaluator=lmc)"], []),
-    ("seq-opt-bjolp",
-     ["--evaluator",
-      "lmc=landmark_cost_partitioning(lm_reasonable_orders_hps(lm_merged([lm_rhw(),lm_hm(m=1)])))",
-      "--search", "astar(lmc,lazy_evaluator=lmc)"], []),
 ]
 CONFIGS = [
     IssueConfig(
