@@ -102,18 +102,19 @@ void LandmarkFactory::edge_add(LandmarkNode &from, LandmarkNode &to,
        landmarks is already present, the stronger edge type wins. */
     assert(&from != &to);
 
-    // If edge already exists, remove if weaker
-    if (from.children.find(&to) != from.children.end() && from.children.find(
-            &to)->second < type) {
-        from.children.erase(&to);
+    auto it = from.children.find(&to);
+    if (it != from.children.end()) {
+        // Replace type if edge already exists, remove if weaker
         assert(to.parents.find(&from) != to.parents.end());
-        to.parents.erase(&from);
-
-        assert(to.parents.find(&from) == to.parents.end());
-        assert(from.children.find(&to) == from.children.end());
-    }
-    // If edge does not exist (or has just been removed), insert
-    if (from.children.find(&to) == from.children.end()) {
+        if (it->second < type) {
+            it->second = type;
+            to.parents[&from] = type;
+            if (log.is_at_least_debug()) {
+                log << "upgraded edge type with address " << &from << endl;
+            }
+        }
+    } else {
+        // Edge does not exist yet.
         assert(to.parents.find(&from) == to.parents.end());
         from.children.emplace(&to, type);
         to.parents.emplace(&from, type);
