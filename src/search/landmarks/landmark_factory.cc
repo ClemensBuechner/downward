@@ -104,7 +104,7 @@ void LandmarkFactory::edge_add(LandmarkNode &from, LandmarkNode &to,
 
     auto it = from.children.find(&to);
     if (it != from.children.end()) {
-        // Replace type if edge already exists, remove if weaker
+        // Edge exists, upgrade type if existing edge is weaker.
         assert(to.parents.find(&from) != to.parents.end());
         if (it->second < type) {
             it->second = type;
