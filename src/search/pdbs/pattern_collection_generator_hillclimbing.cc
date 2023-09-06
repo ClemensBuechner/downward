@@ -121,7 +121,7 @@ PatternCollectionGeneratorHillclimbing::PatternCollectionGeneratorHillclimbing(c
       max_time(opts.get<double>("max_time")),
       rng(utils::parse_rng_from_options(opts)),
       num_rejected(0),
-      hill_climbing_timer(0) {
+      hill_climbing_timer(nullptr) {
 }
 
 int PatternCollectionGeneratorHillclimbing::generate_candidate_pdbs(
@@ -459,7 +459,7 @@ PatternCollectionInformation PatternCollectionGeneratorHillclimbing::compute_pat
     return current_pdbs->get_pattern_collection_information(log);
 }
 
-void add_hillclimbing_options(plugins::Feature &feature) {
+static void add_hillclimbing_options(plugins::Feature &feature) {
     feature.document_note(
         "Note",
         "The pattern collection created by the algorithm will always contain "
@@ -555,7 +555,7 @@ void add_hillclimbing_options(plugins::Feature &feature) {
     add_generator_options_to_feature(feature);
 }
 
-void check_hillclimbing_options(
+static void check_hillclimbing_options(
     const plugins::Options &opts, const utils::Context &context) {
     if (opts.get<int>("min_improvement") > opts.get<int>("num_samples")) {
         context.error(
