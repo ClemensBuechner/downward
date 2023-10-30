@@ -67,29 +67,14 @@ exp.add_suite(BENCHMARKS_DIR, SUITE)
 exp.add_parser(exp.EXITCODE_PARSER)
 exp.add_parser(exp.SINGLE_SEARCH_PARSER)
 exp.add_parser(exp.PLANNER_PARSER)
-exp.add_parser("landmark_parser.py")
 
-ATTRIBUTES = IssueExperiment.DEFAULT_TABLE_ATTRIBUTES + [
-    Attribute("landmarks", min_wins=False),
-    Attribute("landmarks_disjunctive", min_wins=False),
-    Attribute("landmarks_conjunctive", min_wins=False),
-    Attribute("orderings", min_wins=False),
-    Attribute("lmgraph_generation_time"),
-]
+ATTRIBUTES = IssueExperiment.DEFAULT_TABLE_ATTRIBUTES
 
 exp.add_step("build", exp.build)
 exp.add_step("start", exp.start_runs)
 exp.add_fetcher(name="fetch")
 
-exp.add_comparison_table_step(
-    attributes=IssueExperiment.DEFAULT_TABLE_ATTRIBUTES + [
-        Attribute("landmarks", min_wins=False),
-        Attribute("landmarks_disjunctive", min_wins=False),
-        Attribute("landmarks_conjunctive", min_wins=False),
-        Attribute("orderings", min_wins=False),
-        Attribute("lmgraph_generation_time", min_wins=True),
-    ]
-)
+exp.add_comparison_table_step(attributes=ATTRIBUTES)
 exp.add_scatter_plot_step(relative=True, attributes=["total_time", "memory"])
 
 exp.add_archive_step(ARCHIVE_PATH)
