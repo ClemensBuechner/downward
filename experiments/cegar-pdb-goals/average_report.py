@@ -67,7 +67,7 @@ class AverageAlgorithmReport(PlanningReport):
                         ] or 'score' in attribute:
                         # if 'score' not in attribute:
                             # assert len(values_without_none) == 10 # does not hold for scores
-                        average_value = sum(values_without_none)/float(len(values))
+                        average_value = sum(values_without_none)/float(len(values_without_none))
                         if len(values_without_none) > 1:
                             stddev = 0
                             for val in values_without_none:
