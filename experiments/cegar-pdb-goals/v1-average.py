@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import itertools
 import os
 
 from lab.environments import LocalEnvironment, BaselSlurmEnvironment
@@ -9,6 +10,7 @@ from lab.reports import Attribute, arithmetic_mean
 from average_report import AverageAlgorithmReport
 import common_setup
 from common_setup import IssueConfig, IssueExperiment
+from downward.reports.compare import ComparativeReport
 
 ISSUE = "cegar-pdb-goals"
 ARCHIVE_PATH = f"buechner/downward/{ISSUE}"
@@ -107,13 +109,25 @@ exp.add_report(
     name="report-average",
 )
 # exp.add_fetcher(f"{exp.eval_dir}/average-eval", name="fetch-average")
-exp.configs = []
-for rev in REVISIONS:
-    exp.configs += [
-        f"{rev}-cpdbs",
-        f"{rev}-zopdbs",
-    ]
-exp.add_comparison_table_step(attributes=ATTRIBUTES)
+
+non_seeded_configs = set([config[:-6] for config, _, _ in CONFIG_NICKS])
+print(non_seeded_configs)
+def make_comparison_tables(**kwargs):
+    for rev1, rev2 in itertools.combinations(REVISIONS, 2):
+        compared_configs = []
+        for config in non_seeded_configs:
+            compared_configs.append(
+                ("%s-%s" % (rev1, config),
+                 "%s-%s" % (rev2, config),
+                 "Diff (%s)" % config))
+        report = ComparativeReport(compared_configs, **kwargs)
+        outfile = os.path.join(
+            exp.eval_dir,
+            "%s-%s-%s-compare.%s" % (
+                exp.name, rev1, rev2, report.output_format))
+        report(f"{exp.eval_dir}/average-eval/", outfile)
+
+exp.add_step("make-average-table", make_comparison_tables)
 
 exp.add_archive_step(ARCHIVE_PATH)
 # exp.add_archive_eval_dir_step(ARCHIVE_PATH)
