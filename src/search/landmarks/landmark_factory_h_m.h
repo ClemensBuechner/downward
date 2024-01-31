@@ -107,35 +107,41 @@ class LandmarkFactoryHM : public LandmarkFactory {
     // second is unsat pcs for conditional noops
     std::vector<std::pair<int, std::vector<int>>> unsat_pc_count_;
 
-    void get_m_sets_(const VariablesProxy &variables, int m, int num_included, int current_var,
+    void get_m_sets_(const VariablesProxy &variables,
+                     int num_included,
+                     int current_var,
                      FluentSet &current,
                      std::vector<FluentSet> &subsets);
 
     void get_m_sets_of_set(const VariablesProxy &variables,
-                           int m, int num_included,
+                           int num_included,
                            int current_var_index,
                            FluentSet &current,
                            std::vector<FluentSet> &subsets,
                            const FluentSet &superset);
 
-    void get_split_m_sets(const VariablesProxy &variables, int m,
+    void get_split_m_sets(const VariablesProxy &variables,
                           int ss1_num_included, int ss2_num_included,
                           int ss1_var_index, int ss2_var_index,
                           FluentSet &current,
                           std::vector<FluentSet> &subsets,
-                          const FluentSet &superset1, const FluentSet &superset2);
+                          const FluentSet &superset1,
+                          const FluentSet &superset2);
 
-    void get_m_sets(const VariablesProxy &variables, int m, std::vector<FluentSet> &subsets);
+    void get_m_sets(const VariablesProxy &variables,
+                    std::vector<FluentSet> &subsets);
 
-    void get_m_sets(const VariablesProxy &variables, int m, std::vector<FluentSet> &subsets,
-                    const FluentSet &superset);
+    void get_m_sets(const VariablesProxy &variables,
+                    std::vector<FluentSet> &subsets, const FluentSet &superset);
 
-    void get_m_sets(const VariablesProxy &variables, int m, std::vector<FluentSet> &subsets,
-                    const State &state);
+    void get_m_sets(const VariablesProxy &variables,
+                    std::vector<FluentSet> &subsets, const State &state);
 
-    void get_split_m_sets(const VariablesProxy &variables, int m, std::vector<FluentSet> &subsets,
-                          const FluentSet &superset1, const FluentSet &superset2);
-    void print_proposition(const VariablesProxy &variables, const FactPair &fluent) const;
+    void get_split_m_sets(
+        const VariablesProxy &variables, std::vector<FluentSet> &subsets,
+        const FluentSet &superset1, const FluentSet &superset2);
+    void print_proposition(const VariablesProxy &variables,
+                           const FactPair &fluent) const;
 
 public:
     explicit LandmarkFactoryHM(const plugins::Options &opts);
