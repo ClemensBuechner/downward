@@ -115,11 +115,11 @@ class LandmarkFactoryHM : public LandmarkFactory {
                                 FluentSet &current_fluents,
                                 std::vector<FluentSet> &subsets);
 
-    void get_m_sets_of_set(const VariablesProxy &variables,
-                           int current_var_index,
-                           FluentSet &current,
-                           std::vector<FluentSet> &subsets,
-                           const FluentSet &superset);
+    void extend_current_fluents_from_set(const VariablesProxy &variables,
+                                         int current_var_index,
+                                         FluentSet &current_fluents,
+                                         std::vector<FluentSet> &subsets,
+                                         const FluentSet &superset);
 
     void get_split_m_sets(const VariablesProxy &variables,
                           bool included1, bool included2,
