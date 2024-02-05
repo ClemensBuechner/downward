@@ -104,33 +104,28 @@ static bool contains(list<T> &alist, const T &val) {
 
 // find partial variable assignments with size m or less
 // (look at all the variables in the problem)
-void LandmarkFactoryHM::get_m_sets_(const VariablesProxy &variables,
-                                    int current_var,
-                                    FluentSet &current,
-                                    vector<FluentSet> &subsets) {
-    int num_variables = variables.size();
-    int num_included = static_cast<int>(current.size());
-    if (num_included == m_) {
-        subsets.push_back(current);
-        return;
-    }
-    if (current_var == num_variables) {
-        if (num_included != 0) {
-            subsets.push_back(current);
-        }
-        return;
-    }
-    // include a value of current_var in the set
-    for (int i = 0; i < variables[current_var].get_domain_size(); ++i) {
-        FactPair current_var_fact(current_var, i);
-        if (interesting_for_fluent_set(variables, current_var_fact, current)) {
-            current.push_back(current_var_fact);
-            get_m_sets_(variables, current_var + 1, current, subsets);
-            current.pop_back();
+void LandmarkFactoryHM::extend_current_fluents(const VariablesProxy &variables,
+                                               int current_var,
+                                               FluentSet &current_fluents,
+                                               vector<FluentSet> &subsets) {
+    assert(static_cast<int>(current_fluents.size()) < m_);
+    for (int val = 0; val < variables[current_var].get_domain_size(); ++val) {
+        FactPair fact(current_var, val);
+        if (interesting_for_fluent_set(variables, fact, current_fluents)) {
+            current_fluents.push_back(fact);
+            subsets.push_back(current_fluents);
+            if (static_cast<int>(current_fluents.size()) < m_) {
+                int num_variables = static_cast<int>(variables.size());
+                for (int next_var = current_var + 1; next_var < num_variables;
+                     ++next_var) {
+                    extend_current_fluents(
+
+                        variables, next_var, current_fluents, subsets);
+                }
+            }
+            current_fluents.pop_back();
         }
     }
-    // don't include a value of current_var in the set
-    get_m_sets_(variables, current_var + 1, current, subsets);
 }
 
 // find all size m or less subsets of superset
@@ -228,8 +223,11 @@ void LandmarkFactoryHM::get_split_m_sets(
 // get partial assignments of size <= m in the problem
 void LandmarkFactoryHM::get_m_sets(const VariablesProxy &variables,
                                    vector<FluentSet> &subsets) {
-    FluentSet c;
-    get_m_sets_(variables, 0, c, subsets);
+    FluentSet current_fluents;
+    int num_vars = static_cast<int>(variables.size());
+    for (int var_id = 0; var_id < num_vars; ++var_id) {
+        extend_current_fluents(variables, var_id, current_fluents, subsets);
+    }
 }
 
 // get subsets of superset with size <= m
