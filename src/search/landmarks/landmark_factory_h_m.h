@@ -78,6 +78,9 @@ class LandmarkFactoryHM : public LandmarkFactory {
     bool interesting(const VariablesProxy &variables,
                      const FactPair &fact1,
                      const FactPair &fact2) const;
+    bool interesting_for_fluent_set(const VariablesProxy &variables,
+                                    const FactPair &fact,
+                                    const FluentSet &fluent_set) const;
 
     void postprocess(const TaskProxy &task_proxy);
 

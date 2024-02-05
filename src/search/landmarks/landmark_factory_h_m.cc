@@ -122,16 +122,8 @@ void LandmarkFactoryHM::get_m_sets_(const VariablesProxy &variables,
     }
     // include a value of current_var in the set
     for (int i = 0; i < variables[current_var].get_domain_size(); ++i) {
-        bool use_var = true;
         FactPair current_var_fact(current_var, i);
-        for (const FactPair &current_fact : current) {
-            if (!interesting(variables, current_var_fact, current_fact)) {
-                use_var = false;
-                break;
-            }
-        }
-
-        if (use_var) {
+        if (interesting_for_fluent_set(variables, current_var_fact, current)) {
             current.push_back(current_var_fact);
             get_m_sets_(variables, current_var + 1, current, subsets);
             current.pop_back();
@@ -160,15 +152,8 @@ void LandmarkFactoryHM::get_m_sets_of_set(const VariablesProxy &variables,
         return;
     }
 
-    bool use_var = true;
-    for (const FactPair &fluent : current) {
-        if (!interesting(variables, superset[current_var_index], fluent)) {
-            use_var = false;
-            break;
-        }
-    }
-
-    if (use_var) {
+    if (interesting_for_fluent_set(variables, superset[current_var_index],
+                                   current)) {
         // include current fluent in the set
         current.push_back(superset[current_var_index]);
         get_m_sets_of_set(
@@ -203,19 +188,11 @@ void LandmarkFactoryHM::get_split_m_sets(
         return;
     }
 
-    bool use_var = true;
-
     if (ss1_var_index != sup1_size &&
         (ss2_var_index == sup2_size ||
          superset1[ss1_var_index] < superset2[ss2_var_index])) {
-        for (const FactPair &fluent : current) {
-            if (!interesting(variables, superset1[ss1_var_index], fluent)) {
-                use_var = false;
-                break;
-            }
-        }
-
-        if (use_var) {
+        if (interesting_for_fluent_set(variables, superset1[ss1_var_index],
+                                       current)) {
             // include
             current.push_back(superset1[ss1_var_index]);
             get_split_m_sets(variables, true, included2, ss1_var_index + 1,
@@ -228,14 +205,8 @@ void LandmarkFactoryHM::get_split_m_sets(
         get_split_m_sets(variables, included1, included2, ss1_var_index + 1,
                          ss2_var_index, current, subsets, superset1, superset2);
     } else {
-        for (const FactPair &fluent : current) {
-            if (!interesting(variables, superset2[ss2_var_index], fluent)) {
-                use_var = false;
-                break;
-            }
-        }
-
-        if (use_var) {
+        if (interesting_for_fluent_set(variables, superset2[ss2_var_index],
+                                       current)) {
             // include
             current.push_back(superset2[ss2_var_index]);
             get_split_m_sets(variables, included1, true, ss1_var_index,
@@ -577,6 +548,15 @@ bool LandmarkFactoryHM::interesting(const VariablesProxy &variables,
     // mutexes can always be safely pruned
     return !variables[fact1.var].get_fact(fact1.value).is_mutex(
         variables[fact2.var].get_fact(fact2.value));
+}
+
+bool LandmarkFactoryHM::interesting_for_fluent_set(
+    const VariablesProxy &variables, const FactPair &fact,
+    const FluentSet &fluent_set) const {
+    return all_of(fluent_set.begin(), fluent_set.end(),
+                  [&](const FactPair &other_fact){
+                      return interesting(variables, fact, other_fact);
+                  });
 }
 
 LandmarkFactoryHM::LandmarkFactoryHM(const plugins::Options &opts)
