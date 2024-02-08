@@ -43,7 +43,10 @@ static void optimize_for_samples(
 static vector<unique_ptr<PotentialFunction>> create_sample_based_potential_functions(
     const plugins::Options &opts) {
     vector<unique_ptr<PotentialFunction>> functions;
-    PotentialOptimizer optimizer(opts);
+    PotentialOptimizer optimizer(
+        opts.get<shared_ptr<AbstractTask>>("transform"),
+        opts.get<lp::LPSolverType>("lpsolver"),
+        opts.get<double>("max_potential"));
     shared_ptr<utils::RandomNumberGenerator> rng(utils::parse_rng_from_options(opts));
     for (int i = 0; i < opts.get<int>("num_heuristics"); ++i) {
         optimize_for_samples(optimizer, opts.get<int>("num_samples"), *rng);

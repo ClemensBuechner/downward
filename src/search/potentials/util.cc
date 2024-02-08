@@ -65,4 +65,13 @@ void prepare_parser_for_admissible_potentials(plugins::Feature &feature) {
     lp::add_lp_solver_option_to_feature(feature);
     Heuristic::add_options_to_feature(feature);
 }
+
+tuple<lp::LPSolverType, shared_ptr<AbstractTask>, bool, string,
+utils::Verbosity> get_admissible_potentials_arguments_from_options(
+    const plugins::Options &options) {
+    tuple lp_tuple = lp::get_lp_solver_arguments_from_options(options);
+    tuple heuristic_tuple =
+        Heuristic::get_heuristic_arguments_from_options(options);
+    return tuple_cat(lp_tuple, heuristic_tuple);
+}
 }

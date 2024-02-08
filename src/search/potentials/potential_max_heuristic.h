@@ -22,7 +22,12 @@ public:
     explicit PotentialMaxHeuristic(
         const plugins::Options &opts,
         std::vector<std::unique_ptr<PotentialFunction>> &&functions);
-    ~PotentialMaxHeuristic() = default;
+    PotentialMaxHeuristic(
+        std::vector<std::unique_ptr<PotentialFunction>> &&functions,
+        const std::shared_ptr<AbstractTask> &transform,
+        bool cache_estimates,
+        const std::string &description,
+        utils::Verbosity verbosity);
 };
 }
 

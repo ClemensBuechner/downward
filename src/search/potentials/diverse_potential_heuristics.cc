@@ -23,6 +23,21 @@ DiversePotentialHeuristics::DiversePotentialHeuristics(const plugins::Options &o
       log(utils::get_log_from_options(opts)) {
 }
 
+DiversePotentialHeuristics::DiversePotentialHeuristics(
+    std::shared_ptr<AbstractTask> &transform,
+    lp::LPSolverType lp_solver,
+    double max_potential,
+    int max_num_heuristics,
+    int num_samples,
+    int random_seed,
+    utils::Verbosity verbosity)
+    : optimizer(transform, lp_solver, max_potential),
+      max_num_heuristics(max_num_heuristics),
+      num_samples(num_samples),
+      rng(utils::get_rng(random_seed)),
+      log(utils::get_log_for_verbosity(verbosity)) {
+}
+
 SamplesToFunctionsMap
 DiversePotentialHeuristics::filter_samples_and_compute_functions(
     const vector<State> &samples) {
@@ -166,8 +181,13 @@ public:
         utils::add_rng_options(*this);
     }
 
-    virtual shared_ptr<PotentialMaxHeuristic> create_component(const plugins::Options &options, const utils::Context &) const override {
-        DiversePotentialHeuristics factory(options);
+    virtual shared_ptr<PotentialMaxHeuristic> create_component(
+        const plugins::Options &options, const utils::Context &) const override {
+        DiversePotentialHeuristics factory(
+            options.get<shared_ptr<AbstractTask>>("transform"),
+            lp::get_lp_solver_arguments_from_options(options), // TODO: issue1082 we don't really know here that LP options are used.
+
+            );
         return make_shared<PotentialMaxHeuristic>(options, factory.find_functions());
     }
 };

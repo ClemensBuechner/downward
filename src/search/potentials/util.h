@@ -25,6 +25,9 @@ std::vector<State> sample_without_dead_end_detection(
 
 std::string get_admissible_potentials_reference();
 void prepare_parser_for_admissible_potentials(plugins::Feature &feature);
+tuple<lp::LPSolverType, shared_ptr<AbstractTask>, bool, string,
+    utils::Verbosity> get_admissible_potentials_arguments_from_options(
+    const plugins::Options &options) {
 }
 
 #endif

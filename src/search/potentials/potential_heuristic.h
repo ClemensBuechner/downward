@@ -18,8 +18,12 @@ protected:
     virtual int compute_heuristic(const State &ancestor_state) override;
 
 public:
-    explicit PotentialHeuristic(
-        const plugins::Options &opts, std::unique_ptr<PotentialFunction> function);
+    PotentialHeuristic(
+        std::unique_ptr<PotentialFunction> function,
+        const std::shared_ptr<AbstractTask> &transform,
+        bool cache_estimates,
+        const std::string &description,
+        utils::Verbosity verbosity);
     // Define in .cc file to avoid include in header.
     ~PotentialHeuristic();
 };

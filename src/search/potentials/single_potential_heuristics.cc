@@ -14,7 +14,7 @@ enum class OptimizeFor {
     ALL_STATES,
 };
 
-static unique_ptr<PotentialFunction> create_potential_function(
+static shared_ptr<PotentialFunction> create_potential_function(
     const plugins::Options &opts, OptimizeFor opt_func) {
     PotentialOptimizer optimizer(opts);
     const AbstractTask &task = *opts.get<shared_ptr<AbstractTask>>("transform");
@@ -42,8 +42,11 @@ public:
         prepare_parser_for_admissible_potentials(*this);
     }
 
-    virtual shared_ptr<PotentialHeuristic> create_component(const plugins::Options &options, const utils::Context &) const override {
-        return make_shared<PotentialHeuristic>(options, create_potential_function(options, OptimizeFor::INITIAL_STATE));
+    virtual shared_ptr<PotentialHeuristic> create_component(
+        const plugins::Options &options, const utils::Context &) const override {
+        return plugins::make_shared_from_arg_tuples<PotentialHeuristic>(
+            create_potential_function(options, OptimizeFor::INITIAL_STATE),
+            Heuristic::get_heuristic_arguments_from_options(options));
     }
 };
 
@@ -59,8 +62,11 @@ public:
         prepare_parser_for_admissible_potentials(*this);
     }
 
-    virtual shared_ptr<PotentialHeuristic> create_component(const plugins::Options &options, const utils::Context &) const override {
-        return make_shared<PotentialHeuristic>(options, create_potential_function(options, OptimizeFor::ALL_STATES));
+    virtual shared_ptr<PotentialHeuristic> create_component(
+        const plugins::Options &options, const utils::Context &) const override {
+        return plugins::make_shared_from_arg_tuples<PotentialHeuristic>(
+            create_potential_function(options, OptimizeFor::ALL_STATES),
+            Heuristic::get_heuristic_arguments_from_options(options));
     }
 };
 

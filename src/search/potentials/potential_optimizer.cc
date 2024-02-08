@@ -19,11 +19,26 @@ static int get_undefined_value(VariableProxy var) {
     return var.get_domain_size();
 }
 
+// TODO: remove issue1082
 PotentialOptimizer::PotentialOptimizer(const plugins::Options &opts)
     : task(opts.get<shared_ptr<AbstractTask>>("transform")),
       task_proxy(*task),
       lp_solver(opts.get<lp::LPSolverType>("lpsolver")),
       max_potential(opts.get<double>("max_potential")),
+      num_lp_vars(0) {
+    task_properties::verify_no_axioms(task_proxy);
+    task_properties::verify_no_conditional_effects(task_proxy);
+    initialize();
+}
+
+PotentialOptimizer::PotentialOptimizer(
+    const std::shared_ptr<AbstractTask> &transform,
+    lp::LPSolverType lp_solver,
+    double max_potential)
+    : task(transform),
+      task_proxy(*task),
+      lp_solver(lp_solver),
+      max_potential(max_potential),
       num_lp_vars(0) {
     task_properties::verify_no_axioms(task_proxy);
     task_properties::verify_no_conditional_effects(task_proxy);

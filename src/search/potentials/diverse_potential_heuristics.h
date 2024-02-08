@@ -55,6 +55,15 @@ class DiversePotentialHeuristics {
 
 public:
     explicit DiversePotentialHeuristics(const plugins::Options &opts);
+    DiversePotentialHeuristics(
+        std::shared_ptr<AbstractTask> &transform,
+        lp::LPSolverType lp_solver,
+        double max_potential,
+        int max_num_heuristics,
+        int num_samples,
+        int random_seed,
+        utils::Verbosity verbosity);
+
     ~DiversePotentialHeuristics() = default;
 
     // Sample states, then cover them.
