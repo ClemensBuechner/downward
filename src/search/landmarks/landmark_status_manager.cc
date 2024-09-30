@@ -148,8 +148,8 @@ void LandmarkStatusManager::progress(
         parent_past, parent_future, parent_ancestor_state,
         past, future, ancestor_state);
     progress_goals(ancestor_state, future);
-    progress_greedy_necessary_orderings(ancestor_state, past, future);
-    progress_reasonable_orderings(past, future);
+    progress_greedy_necessary_orderings(ancestor_state, parent_past, future);
+    progress_reasonable_orderings(parent_past, future);
 }
 
 void LandmarkStatusManager::progress_landmarks(
@@ -193,12 +193,12 @@ void LandmarkStatusManager::progress_goals(const State &ancestor_state,
 }
 
 void LandmarkStatusManager::progress_greedy_necessary_orderings(
-    const State &ancestor_state, const BitsetView &past, BitsetView &future) {
+    const State &ancestor_state, const ConstBitsetView &parent_past, BitsetView &future) {
     for (auto &[tail, children] : greedy_necessary_children) {
         const Landmark &lm = tail->get_landmark();
         assert(!children.empty());
         for (auto &child : children) {
-            if (!past.test(child->get_id())
+            if (!parent_past.test(child->get_id())
                 && !lm.is_true_in_state(ancestor_state)) {
                 future.set(tail->get_id());
                 break;
@@ -208,11 +208,11 @@ void LandmarkStatusManager::progress_greedy_necessary_orderings(
 }
 
 void LandmarkStatusManager::progress_reasonable_orderings(
-    const BitsetView &past, BitsetView &future) {
+    const ConstBitsetView &parent_past, BitsetView &future) {
     for (auto &[head, parents] : reasonable_parents) {
         assert(!parents.empty());
         for (auto &parent : parents) {
-            if (!past.test(parent->get_id())) {
+            if (!parent_past.test(parent->get_id())) {
                 future.set(head->get_id());
                 break;
             }

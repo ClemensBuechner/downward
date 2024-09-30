@@ -24,10 +24,10 @@ class LandmarkStatusManager {
         BitsetView &future, const State &ancestor_state);
     void progress_goals(const State &ancestor_state, BitsetView &future);
     void progress_greedy_necessary_orderings(
-        const State &ancestor_state, const BitsetView &past,
+        const State &ancestor_state, const ConstBitsetView &parent_past,
         BitsetView &future);
     void progress_reasonable_orderings(
-        const BitsetView &past, BitsetView &future);
+        const ConstBitsetView &parent_past, BitsetView &future);
 public:
     LandmarkStatusManager(
         LandmarkGraph &graph,
