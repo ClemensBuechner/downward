@@ -170,7 +170,8 @@ int LandmarkHeuristic::compute_heuristic(const State &ancestor_state) {
        landmark graph after construction which we try to avoid at the moment on
        the implementation side.
     */
-    if (initial_landmark_graph_has_cycle_of_natural_orderings) {
+    if (initial_landmark_graph_has_cycle_of_natural_orderings
+        || lm_status_manager->is_dead_end(ancestor_state)) {
         return DEAD_END;
     }
     int h = get_heuristic_value(ancestor_state);

@@ -17,6 +17,7 @@ class LandmarkStatusManager {
 
     PerStateBitset past_landmarks;
     PerStateBitset future_landmarks;
+    PerStateInformation<bool> dead_end;
 
     void progress_landmarks(
         ConstBitsetView &parent_past, ConstBitsetView &parent_future,
@@ -24,10 +25,11 @@ class LandmarkStatusManager {
         BitsetView &future, const State &ancestor_state);
     void progress_goals(const State &ancestor_state, BitsetView &future);
     void progress_greedy_necessary_orderings(
-        const State &ancestor_state, const ConstBitsetView &parent_past,
-        BitsetView &future);
+        const State &parent_ancestor_state, const ConstBitsetView &parent_past,
+        const State &ancestor_state, BitsetView &future);
     void progress_reasonable_orderings(
-        const ConstBitsetView &parent_past, BitsetView &future);
+        const State &parent_ancestor_state, const ConstBitsetView &parent_past,
+        const State &ancestor_state, BitsetView &future);
 public:
     LandmarkStatusManager(
         LandmarkGraph &graph,
@@ -39,6 +41,7 @@ public:
     BitsetView get_future_landmarks(const State &state);
     ConstBitsetView get_past_landmarks(const State &state) const;
     ConstBitsetView get_future_landmarks(const State &state) const;
+    bool is_dead_end(const State &state) const;
 
     void progress_initial_state(const State &initial_state);
     void progress(

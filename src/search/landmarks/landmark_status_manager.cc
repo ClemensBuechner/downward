@@ -71,7 +71,8 @@ LandmarkStatusManager::LandmarkStatusManager(
       past_landmarks(vector<bool>(graph.get_num_landmarks(), true)),
       /* We initialize to false in *future_landmarks* because false is
          the neutral element for disjunction/set union. */
-      future_landmarks(vector<bool>(graph.get_num_landmarks(), false)) {
+      future_landmarks(vector<bool>(graph.get_num_landmarks(), false)),
+      dead_end(false) {
 }
 
 BitsetView LandmarkStatusManager::get_past_landmarks(const State &state) {
@@ -88,6 +89,10 @@ ConstBitsetView LandmarkStatusManager::get_past_landmarks(const State &state) co
 
 ConstBitsetView LandmarkStatusManager::get_future_landmarks(const State &state) const {
     return future_landmarks[state];
+}
+
+bool LandmarkStatusManager::is_dead_end(const State &state) const {
+    return dead_end[state];
 }
 
 void LandmarkStatusManager::progress_initial_state(const State &initial_state) {
@@ -144,12 +149,13 @@ void LandmarkStatusManager::progress(
     assert(future.size() == lm_graph.get_num_landmarks());
     assert(parent_future.size() == lm_graph.get_num_landmarks());
 
-    progress_landmarks(
-        parent_past, parent_future, parent_ancestor_state,
-        past, future, ancestor_state);
+    progress_landmarks(parent_past, parent_future, parent_ancestor_state,
+                       past, future, ancestor_state);
     progress_goals(ancestor_state, future);
-    progress_greedy_necessary_orderings(ancestor_state, parent_past, future);
-    progress_reasonable_orderings(parent_past, future);
+    progress_greedy_necessary_orderings(
+        parent_ancestor_state, parent_past, ancestor_state, future);
+    progress_reasonable_orderings(parent_ancestor_state, parent_past,
+                                  ancestor_state, future);
 }
 
 void LandmarkStatusManager::progress_landmarks(
@@ -193,26 +199,44 @@ void LandmarkStatusManager::progress_goals(const State &ancestor_state,
 }
 
 void LandmarkStatusManager::progress_greedy_necessary_orderings(
-    const State &ancestor_state, const ConstBitsetView &parent_past, BitsetView &future) {
+    const State &parent_ancestor_state, const ConstBitsetView &parent_past,
+    const State &ancestor_state, BitsetView &future) {
     for (auto &[tail, children] : greedy_necessary_children) {
         const Landmark &lm = tail->get_landmark();
+        bool lm_holds_in_parent_state =
+            lm.is_true_in_state(parent_ancestor_state);
+        bool lm_holds_in_state = lm.is_true_in_state(ancestor_state);
         assert(!children.empty());
         for (auto &child : children) {
-            if (!parent_past.test(child->get_id())
-                && !lm.is_true_in_state(ancestor_state)) {
-                future.set(tail->get_id());
-                break;
+            if (!parent_past.test(child->get_id())) {
+                if (lm_holds_in_parent_state
+                    && child->get_landmark().is_true_in_state(ancestor_state)) {
+                    dead_end[ancestor_state] = true;
+                    return;
+                }
+                if (!lm_holds_in_state) {
+                    future.set(tail->get_id());
+                    break;
+                }
             }
         }
     }
 }
 
 void LandmarkStatusManager::progress_reasonable_orderings(
-    const ConstBitsetView &parent_past, BitsetView &future) {
+    const State &parent_ancestor_state, const ConstBitsetView &parent_past,
+    const State &ancestor_state, BitsetView &future) {
     for (auto &[head, parents] : reasonable_parents) {
         assert(!parents.empty());
         for (auto &parent : parents) {
             if (!parent_past.test(parent->get_id())) {
+                const Landmark &parent_lm = parent->get_landmark();
+                const Landmark &lm = head->get_landmark();
+                if (parent_lm.is_true_in_state(parent_ancestor_state)
+                    && lm.is_true_in_state(ancestor_state)
+                    && parent_lm.is_true_in_state(ancestor_state)) {
+                    dead_end[ancestor_state] = true;
+                }
                 future.set(head->get_id());
                 break;
             }
