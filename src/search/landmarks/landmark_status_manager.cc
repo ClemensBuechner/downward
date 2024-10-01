@@ -196,10 +196,11 @@ void LandmarkStatusManager::progress_greedy_necessary_orderings(
     const State &ancestor_state, const ConstBitsetView &parent_past, BitsetView &future) {
     for (auto &[tail, children] : greedy_necessary_children) {
         const Landmark &lm = tail->get_landmark();
+        bool lm_true_in_state = lm.is_true_in_state(ancestor_state);
         assert(!children.empty());
         for (auto &child : children) {
-            if (!parent_past.test(child->get_id())
-                && !lm.is_true_in_state(ancestor_state)) {
+            if (!parent_past.test(child->get_id()) && !lm_true_in_state
+                && !child->get_landmark().is_true_in_state(ancestor_state)) {
                 future.set(tail->get_id());
                 break;
             }
