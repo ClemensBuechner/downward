@@ -10,8 +10,7 @@ from common_setup import IssueConfig, IssueExperiment
 
 from landmark_parser import LandmarkParser
 
-ISSUE = "issue1072"
-ARCHIVE_PATH = f"ai/downward/{ISSUE}"
+ARCHIVE_PATH = "buechner/downward/landmark-bugfix"
 DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_DIR = os.environ["DOWNWARD_REPO"]
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
