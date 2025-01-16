@@ -23,7 +23,7 @@ enum class EdgeType {
       sense that, e.g., every greedy-necessary ordering is also natural and
       reasonable. (It is a sad fact of terminology that necessary is indeed a
       special case of greedy-necessary, i.e., every necessary ordering is
-      greedy-necessary, but not vice versa.
+      greedy-necessary, but not vice versa.)
     */
     NECESSARY = 3,
     GREEDY_NECESSARY = 2,
@@ -84,7 +84,8 @@ private:
 public:
     /* This is needed only by landmark graph factories and will disappear
        when moving landmark graph creation there. */
-    LandmarkGraph();
+    LandmarkGraph(
+        Nodes &&nodes);
 
     // needed by both landmarkgraph-factories and non-landmarkgraph-factories
     const Nodes &get_nodes() const {
@@ -94,61 +95,13 @@ public:
     int get_num_landmarks() const {
         return nodes.size();
     }
-    /* This is needed only by landmark graph factories and will disappear
-       when moving landmark graph creation there. */
-    int get_num_disjunctive_landmarks() const {
-        return num_disjunctive_landmarks;
-    }
-    /* This is needed only by landmark graph factories and will disappear
-       when moving landmark graph creation there. */
-    int get_num_conjunctive_landmarks() const {
-        return num_conjunctive_landmarks;
-    }
-    /* This is needed only by landmark graph factories and will disappear
-       when moving landmark graph creation there. */
+    // needed by both landmarkgraph-factories and non-landmarkgraph-factories
     int get_num_edges() const;
 
     // only needed by non-landmarkgraph-factories
     LandmarkNode *get_node(int index) const;
     // only needed by non-landmarkgraph-factories
     LandmarkNode *get_node(const FactPair &fact) const;
-    /* This is needed only by landmark graph factories and will disappear
-       when moving landmark graph creation there. */
-    LandmarkNode &get_simple_landmark(const FactPair &fact) const;
-    /* This is needed only by landmark graph factories and will disappear
-       when moving landmark graph creation there. */
-    LandmarkNode &get_disjunctive_landmark(const FactPair &fact) const;
-
-    /* This is needed only by landmark graph factories and will disappear
-       when moving landmark graph creation there.  It is not needed by
-       HMLandmarkFactory*/
-    bool contains_simple_landmark(const FactPair &lm) const;
-    /* Only used internally. */
-    bool contains_disjunctive_landmark(const FactPair &lm) const;
-    /* This is needed only by landmark graph factories and will disappear
-       when moving landmark graph creation there.  It is not needed by
-       HMLandmarkFactory*/
-    bool contains_overlapping_disjunctive_landmark(const std::set<FactPair> &lm) const;
-    /* This is needed only by landmark graph factories and will disappear
-       when moving landmark graph creation there. */
-    bool contains_identical_disjunctive_landmark(const std::set<FactPair> &lm) const;
-    /* This is needed only by landmark graph factories and will disappear
-       when moving landmark graph creation there.  It is not needed by
-       HMLandmarkFactory*/
-    bool contains_landmark(const FactPair &fact) const;
-
-    /* This is needed only by landmark graph factories and will disappear
-       when moving landmark graph creation there. */
-    LandmarkNode &add_landmark(Landmark &&landmark);
-    /* This is needed only by landmark graph factories and will disappear
-       when moving landmark graph creation there. */
-    void remove_node(LandmarkNode *node);
-    void remove_node_if(
-        const std::function<bool (const LandmarkNode &)> &remove_node_condition);
-
-    /* This is needed only by landmark graph factories and will disappear
-       when moving landmark graph creation there. */
-    void set_landmark_ids();
 };
 }
 

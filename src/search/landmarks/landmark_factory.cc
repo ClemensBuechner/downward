@@ -70,9 +70,9 @@ shared_ptr<LandmarkGraph> LandmarkFactory::compute_lm_graph(
             }
         } else {
             log << "Discovered " << lm_graph->get_num_landmarks()
-                << " landmarks, of which " << lm_graph->get_num_disjunctive_landmarks()
-                << " are disjunctive and "
-                << lm_graph->get_num_conjunctive_landmarks() << " are conjunctive." << endl;
+                << " landmarks, of which " << get_num_disjunctive_landmarks()
+                << " are disjunctive and " << get_num_conjunctive_landmarks()
+                << " are conjunctive." << endl;
             log << lm_graph->get_num_edges() << " edges" << endl;
         }
     }
@@ -94,6 +94,119 @@ bool LandmarkFactory::is_landmark_precondition(
         }
     }
     return false;
+}
+
+LandmarkNode &LandmarkFactory::get_simple_landmark(const FactPair &fact) const {
+    assert(contains_simple_landmark(fact));
+    return *(simple_landmarks_to_nodes.find(fact)->second);
+}
+
+// needed only by landmarkgraph-factories.
+LandmarkNode &LandmarkFactory::get_disjunctive_landmark(
+    const FactPair &fact) const {
+    /* Note: this only works because every proposition appears in only one
+       disjunctive landmark. */
+    assert(!contains_simple_landmark(fact));
+    assert(contains_disjunctive_landmark(fact));
+    return *(disjunctive_landmarks_to_nodes.find(fact)->second);
+}
+
+bool LandmarkFactory::contains_simple_landmark(const FactPair &lm) const {
+    return simple_landmarks_to_nodes.contains(lm);
+}
+
+bool LandmarkFactory::contains_disjunctive_landmark(const FactPair &lm) const {
+    return disjunctive_landmarks_to_nodes.contains(lm);
+}
+
+bool LandmarkFactory::contains_overlapping_disjunctive_landmark(
+    const set<FactPair> &lm) const {
+    // Test whether ONE of the facts is present in some disjunctive landmark.
+    for (const FactPair &lm_fact : lm) {
+        if (contains_disjunctive_landmark(lm_fact))
+            return true;
+    }
+    return false;
+}
+
+bool LandmarkFactory::contains_identical_disjunctive_landmark(
+    const set<FactPair> &lm) const {
+    /* Test whether a disjunctive landmark exists which consists EXACTLY of
+       the facts in lm. */
+    LandmarkNode *lmn = nullptr;
+    for (const FactPair &lm_fact : lm) {
+        auto it2 = disjunctive_landmarks_to_nodes.find(lm_fact);
+        if (it2 == disjunctive_landmarks_to_nodes.end())
+            return false;
+        else {
+            if (lmn && lmn != it2->second) {
+                return false;
+            } else if (!lmn)
+                lmn = it2->second;
+        }
+    }
+    return true;
+}
+
+bool LandmarkFactory::contains_landmark(const FactPair &lm) const {
+    /* Note: this only checks for one fact whether it's part of a landmark,
+       hence only simple and disjunctive landmarks are checked. */
+    return contains_simple_landmark(lm) || contains_disjunctive_landmark(lm);
+}
+
+LandmarkNode &LandmarkFactory::add_landmark_to_graph(Landmark &&landmark) {
+    assert(landmark.conjunctive
+           || all_of(landmark.facts.begin(), landmark.facts.end(),
+                     [&](const FactPair &lm_fact) {
+                         return !contains_landmark(lm_fact);
+                     }));
+    unique_ptr<LandmarkNode> new_node =
+        utils::make_unique_ptr<LandmarkNode>(move(landmark));
+    LandmarkNode *new_node_p = new_node.get();
+    const Landmark &lm = new_node->get_landmark();
+    nodes.push_back(move(new_node));
+    if (lm.disjunctive) {
+        for (const FactPair &lm_fact : lm.facts) {
+            disjunctive_landmarks_to_nodes.emplace(lm_fact, new_node_p);
+        }
+        ++num_disjunctive_landmarks;
+    } else if (lm.conjunctive) {
+        ++num_conjunctive_landmarks;
+    } else {
+        simple_landmarks_to_nodes.emplace(lm.facts.front(), new_node_p);
+    }
+    return *new_node_p;
+}
+
+void LandmarkFactory::remove_node(LandmarkNode *node) {
+    remove_node_occurrences(node);
+    auto it = find_if(nodes.begin(), nodes.end(),
+                      [&node](unique_ptr<LandmarkNode> &n) {
+                          return n.get() == node;
+                      });
+    assert(it != nodes.end());
+    nodes.erase(it);
+}
+
+void LandmarkFactory::remove_node_if(
+    const function<bool (const LandmarkNode &)> &remove_node_condition) {
+    for (auto &node : nodes) {
+        if (remove_node_condition(*node)) {
+            remove_node_occurrences(node.get());
+        }
+    }
+    nodes.erase(remove_if(nodes.begin(), nodes.end(),
+                          [&remove_node_condition](const unique_ptr<LandmarkNode> &node) {
+                              return remove_node_condition(*node);
+                          }), nodes.end());
+}
+
+void LandmarkFactory::set_landmark_ids() {
+    int id = 0;
+    for (auto &lmn : nodes) {
+        lmn->set_id(id);
+        ++id;
+    }
 }
 
 void LandmarkFactory::edge_add(LandmarkNode &from, LandmarkNode &to,
@@ -160,6 +273,30 @@ void LandmarkFactory::generate_operators_lookups(const TaskProxy &task_proxy) {
             operators_eff_lookup[effect_fact.get_variable().get_id()][effect_fact.get_value()].push_back(
                 get_operator_or_axiom_id(axiom));
         }
+    }
+}
+
+void LandmarkGraph::remove_node_occurrences(LandmarkNode *node) {
+    for (const auto &parent : node->parents) {
+        LandmarkNode &parent_node = *(parent.first);
+        parent_node.children.erase(node);
+        assert(parent_node.children.find(node) == parent_node.children.end());
+    }
+    for (const auto &child : node->children) {
+        LandmarkNode &child_node = *(child.first);
+        child_node.parents.erase(node);
+        assert(child_node.parents.find(node) == child_node.parents.end());
+    }
+    const Landmark &landmark = node->get_landmark();
+    if (landmark.disjunctive) {
+        --num_disjunctive_landmarks;
+        for (const FactPair &lm_fact : landmark.facts) {
+            disjunctive_landmarks_to_nodes.erase(lm_fact);
+        }
+    } else if (landmark.conjunctive) {
+        --num_conjunctive_landmarks;
+    } else {
+        simple_landmarks_to_nodes.erase(landmark.facts[0]);
     }
 }
 

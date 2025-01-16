@@ -21,6 +21,7 @@ static FactPair get_fact(const Landmark &landmark) {
 
 shared_ptr<LandmarkGraph> get_landmark_graph(
     const shared_ptr<AbstractTask> &task) {
+    // TODO: What's the restriction that disallows other landmark factories?
     LandmarkFactoryHM lm_graph_factory(
         1, false, true, utils::Verbosity::SILENT);
 
@@ -34,6 +35,7 @@ vector<FactPair> get_fact_landmarks(const LandmarkGraph &graph) {
     for (auto &node : nodes) {
         facts.push_back(get_fact(node->get_landmark()));
     }
+    // TODO: Is the order important?
     sort(facts.begin(), facts.end());
     return facts;
 }

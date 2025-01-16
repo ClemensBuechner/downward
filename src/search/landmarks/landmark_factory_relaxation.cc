@@ -22,7 +22,7 @@ void LandmarkFactoryRelaxation::generate_landmarks(const shared_ptr<AbstractTask
 
 void LandmarkFactoryRelaxation::postprocess(
     const TaskProxy &task_proxy, Exploration &exploration) {
-    lm_graph->set_landmark_ids();
+    set_landmark_ids();
     calc_achievers(task_proxy, exploration);
 }
 
@@ -31,10 +31,9 @@ void LandmarkFactoryRelaxation::discard_noncausal_landmarks(
     // TODO: Check if the code works correctly in the presence of axioms.
     task_properties::verify_no_conditional_effects(task_proxy);
     int num_all_landmarks = lm_graph->get_num_landmarks();
-    lm_graph->remove_node_if(
-        [this, &task_proxy, &exploration](const LandmarkNode &node) {
-            return !is_causal_landmark(task_proxy, exploration, node.get_landmark());
-        });
+    remove_node_if([this, &task_proxy, &exploration](const LandmarkNode &node) {
+        return !is_causal_landmark(task_proxy, exploration, node.get_landmark());
+    });
     int num_causal_landmarks = lm_graph->get_num_landmarks();
     if (log.is_at_least_normal()) {
         log << "Discarded " << num_all_landmarks - num_causal_landmarks

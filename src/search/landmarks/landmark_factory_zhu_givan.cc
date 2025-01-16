@@ -54,7 +54,7 @@ void LandmarkFactoryZhuGivan::extract_landmarks(
                 log << "Problem not solvable, even if relaxed." << endl;
             }
             Landmark landmark({goal.get_pair()}, false, false, true);
-            lm_graph->add_landmark(move(landmark));
+            add_landmark_to_graph(move(landmark));
             return;
         }
     }
@@ -64,12 +64,12 @@ void LandmarkFactoryZhuGivan::extract_landmarks(
     for (FactProxy goal : task_proxy.get_goals()) {
         FactPair goal_lm = goal.get_pair();
         LandmarkNode *lm_node;
-        if (lm_graph->contains_simple_landmark(goal_lm)) {
-            lm_node = &lm_graph->get_simple_landmark(goal_lm);
+        if (contains_simple_landmark(goal_lm)) {
+            lm_node = &get_simple_landmark(goal_lm);
             lm_node->get_landmark().is_true_in_goal = true;
         } else {
             Landmark landmark({goal_lm}, false, false, true);
-            lm_node = &lm_graph->add_landmark(move(landmark));
+            lm_node = &add_landmark_to_graph(move(landmark));
         }
         // extract landmarks from goal labels
         const plan_graph_node &goal_node =
@@ -82,11 +82,11 @@ void LandmarkFactoryZhuGivan::extract_landmarks(
                 continue;
             LandmarkNode *node;
             // Add new landmarks
-            if (!lm_graph->contains_simple_landmark(lm)) {
+            if (!contains_simple_landmark(lm)) {
                 Landmark landmark({lm}, false, false);
-                node = &lm_graph->add_landmark(move(landmark));
+                node = &add_landmark_to_graph(move(landmark));
             } else {
-                node = &lm_graph->get_simple_landmark(lm);
+                node = &get_simple_landmark(lm);
             }
             // Add order: lm ->_{nat} lm
             assert(node->parents.find(lm_node) == node->parents.end());

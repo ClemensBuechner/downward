@@ -605,7 +605,7 @@ void LandmarkFactoryHM::initialize(const TaskProxy &task_proxy) {
 void LandmarkFactoryHM::postprocess(const TaskProxy &task_proxy) {
     if (!conjunctive_landmarks)
         discard_conjunctive_landmarks();
-    lm_graph->set_landmark_ids();
+    set_landmark_ids();
 
     if (!use_orders)
         discard_all_orderings();
@@ -614,13 +614,14 @@ void LandmarkFactoryHM::postprocess(const TaskProxy &task_proxy) {
 }
 
 void LandmarkFactoryHM::discard_conjunctive_landmarks() {
-    if (lm_graph->get_num_conjunctive_landmarks() > 0) {
+    if (get_num_conjunctive_landmarks() > 0) {
         if (log.is_at_least_normal()) {
-            log << "Discarding " << lm_graph->get_num_conjunctive_landmarks()
+            log << "Discarding " << get_num_conjunctive_landmarks()
                 << " conjunctive landmarks" << endl;
         }
-        lm_graph->remove_node_if(
-            [](const LandmarkNode &node) {return node.get_landmark().conjunctive;});
+        remove_node_if([](const LandmarkNode &node) {
+            return node.get_landmark().conjunctive;
+        });
     }
 }
 
@@ -932,7 +933,7 @@ void LandmarkFactoryHM::add_lm_node(int set_index, bool goal) {
         landmark.first_achievers.insert(
             hm_entry.first_achievers.begin(),
             hm_entry.first_achievers.end());
-        lm_node_table_[set_index] = &lm_graph->add_landmark(move(landmark));
+        lm_node_table_[set_index] = &add_landmark_to_graph(move(landmark));
     }
 }
 

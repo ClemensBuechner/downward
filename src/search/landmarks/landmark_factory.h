@@ -21,24 +21,24 @@ class Feature;
 }
 
 namespace landmarks {
-/*
-  TODO: Change order to private -> protected -> public
-   (omitted so far to minimize diff)
-*/
 class LandmarkFactory {
-public:
-    virtual ~LandmarkFactory() = default;
-    LandmarkFactory(const LandmarkFactory &) = delete;
+    AbstractTask *lm_graph_task;
+    std::vector<std::vector<std::vector<int>>> operators_eff_lookup;
 
-    std::shared_ptr<LandmarkGraph> compute_lm_graph(const std::shared_ptr<AbstractTask> &task);
+    virtual void generate_landmarks(const std::shared_ptr<AbstractTask> &task) = 0;
+    void generate_operators_lookups(const TaskProxy &task_proxy);
 
-    virtual bool supports_conditional_effects() const = 0;
-
-    bool achievers_are_calculated() const {
-        return achievers_calculated;
-    }
+    // Moved here from landmark graph.
+    void remove_node_occurrences(LandmarkNode *node);
 
 protected:
+    int num_conjunctive_landmarks;
+    int num_disjunctive_landmarks;
+
+    utils::HashMap<FactPair, LandmarkNode *> simple_landmarks_to_nodes;
+    utils::HashMap<FactPair, LandmarkNode *> disjunctive_landmarks_to_nodes;
+    std::vector<std::unique_ptr<LandmarkNode>> nodes;
+
     explicit LandmarkFactory(utils::Verbosity verbosity);
     mutable utils::LogProxy log;
     std::shared_ptr<LandmarkGraph> lm_graph;
@@ -55,12 +55,42 @@ protected:
         return operators_eff_lookup[eff.var][eff.value];
     }
 
-private:
-    AbstractTask *lm_graph_task;
-    std::vector<std::vector<std::vector<int>>> operators_eff_lookup;
+    // Moved here from landmark graph.
+    LandmarkNode &get_simple_landmark(const FactPair &fact) const;
+    LandmarkNode &get_disjunctive_landmark(const FactPair &fact) const;
 
-    virtual void generate_landmarks(const std::shared_ptr<AbstractTask> &task) = 0;
-    void generate_operators_lookups(const TaskProxy &task_proxy);
+    int get_num_disjunctive_landmarks() const {
+        return num_disjunctive_landmarks;
+    }
+    int get_num_conjunctive_landmarks() const {
+        return num_conjunctive_landmarks;
+    }
+
+    bool contains_simple_landmark(const FactPair &lm) const;
+    bool contains_disjunctive_landmark(const FactPair &lm) const;
+    bool contains_overlapping_disjunctive_landmark(const std::set<FactPair> &lm) const;
+    bool contains_identical_disjunctive_landmark(const std::set<FactPair> &lm) const;
+    bool contains_landmark(const FactPair &fact) const;
+
+    LandmarkNode &add_landmark_to_graph(Landmark &&landmark);
+    void remove_node(LandmarkNode *node);
+    void remove_node_if(
+        const std::function<bool (const LandmarkNode &)> &remove_node_condition);
+
+    void set_landmark_ids();
+
+public:
+    virtual ~LandmarkFactory() = default;
+    LandmarkFactory(const LandmarkFactory &) = delete;
+
+    std::shared_ptr<LandmarkGraph> compute_lm_graph(const std::shared_ptr<AbstractTask> &task);
+
+    virtual bool supports_conditional_effects() const = 0;
+
+    bool achievers_are_calculated() const {
+        return achievers_calculated;
+    }
+
 };
 
 extern void add_landmark_factory_options_to_feature(plugins::Feature &feature);

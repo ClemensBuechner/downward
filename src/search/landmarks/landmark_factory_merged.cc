@@ -23,16 +23,18 @@ LandmarkFactoryMerged::LandmarkFactoryMerged(
 LandmarkNode *LandmarkFactoryMerged::get_matching_landmark(const Landmark &landmark) const {
     if (!landmark.disjunctive && !landmark.conjunctive) {
         const FactPair &lm_fact = landmark.facts[0];
-        if (lm_graph->contains_simple_landmark(lm_fact))
-            return &lm_graph->get_simple_landmark(lm_fact);
-        else
+        if (contains_simple_landmark(lm_fact)) {
+            return &get_simple_landmark(lm_fact);
+        } else {
             return nullptr;
+        }
     } else if (landmark.disjunctive) {
         set<FactPair> lm_facts(landmark.facts.begin(), landmark.facts.end());
-        if (lm_graph->contains_identical_disjunctive_landmark(lm_facts))
-            return &lm_graph->get_disjunctive_landmark(landmark.facts[0]);
-        else
+        if (contains_identical_disjunctive_landmark(lm_facts)) {
+            return &get_disjunctive_landmark(landmark.facts[0]);
+        } else {
             return nullptr;
+        }
     } else if (landmark.conjunctive) {
         cerr << "Don't know how to handle conjunctive landmarks yet" << endl;
         utils::exit_with(ExitCode::SEARCH_UNSUPPORTED);
@@ -57,8 +59,8 @@ void LandmarkFactoryMerged::generate_landmarks(
     if (log.is_at_least_normal()) {
         log << "Adding simple landmarks" << endl;
     }
-    for (size_t i = 0; i < lm_graphs.size(); ++i) {
-        const LandmarkGraph::Nodes &nodes = lm_graphs[i]->get_nodes();
+    for (const auto & lm_graph : lm_graphs) {
+        const LandmarkGraph::Nodes &nodes = lm_graph->get_nodes();
         // TODO: loop over landmarks instead
         for (auto &lm_node : nodes) {
             const Landmark &landmark = lm_node->get_landmark();
@@ -67,9 +69,9 @@ void LandmarkFactoryMerged::generate_landmarks(
                 utils::exit_with(ExitCode::SEARCH_UNSUPPORTED);
             } else if (landmark.disjunctive) {
                 continue;
-            } else if (!lm_graph->contains_landmark(landmark.facts[0])) {
+            } else if (contains_landmark(landmark.facts[0])) {
                 Landmark copy(landmark);
-                lm_graph->add_landmark(move(copy));
+                add_landmark_to_graph(move(copy));
             }
         }
     }
@@ -91,10 +93,10 @@ void LandmarkFactoryMerged::generate_landmarks(
 */
                 bool exists =
                     any_of(landmark.facts.begin(), landmark.facts.end(),
-                           [&](const FactPair &lm_fact) {return lm_graph->contains_landmark(lm_fact);});
+                           [&](const FactPair &lm_fact) {return contains_landmark(lm_fact);});
                 if (!exists) {
                     Landmark copy(landmark);
-                    lm_graph->add_landmark(move(copy));
+                    add_landmark_to_graph(move(copy));
                 }
             }
         }
@@ -131,7 +133,7 @@ void LandmarkFactoryMerged::generate_landmarks(
 }
 
 void LandmarkFactoryMerged::postprocess() {
-    lm_graph->set_landmark_ids();
+    set_landmark_ids();
 }
 
 bool LandmarkFactoryMerged::supports_conditional_effects() const {

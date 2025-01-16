@@ -146,14 +146,14 @@ void LandmarkFactoryRpgSasp::get_greedy_preconditions_for_lm(
 
 void LandmarkFactoryRpgSasp::found_simple_lm_and_order(
     const FactPair &a, LandmarkNode &b, EdgeType t) {
-    if (lm_graph->contains_simple_landmark(a)) {
-        LandmarkNode &simple_lm = lm_graph->get_simple_landmark(a);
+    if (contains_simple_landmark(a)) {
+        LandmarkNode &simple_lm = get_simple_landmark(a);
         edge_add(simple_lm, b, t);
         return;
     }
 
     Landmark landmark({a}, false, false);
-    if (lm_graph->contains_disjunctive_landmark(a)) {
+    if (contains_disjunctive_landmark(a)) {
         // In issue1004, we fixed a bug in this part of the code. It now removes
         // the disjunctive landmark along with all its orderings from the
         // landmark graph and adds a new simple landmark node. Before this
@@ -163,7 +163,7 @@ void LandmarkFactoryRpgSasp::found_simple_lm_and_order(
 
         // Simple landmarks are more informative than disjunctive ones,
         // remove disj. landmark and add simple one
-        LandmarkNode *disj_lm = &lm_graph->get_disjunctive_landmark(a);
+        LandmarkNode *disj_lm = &get_disjunctive_landmark(a);
 
         // Remove all pointers to disj_lm from internal data structures (i.e.,
         // the list of open landmarks and forward orders)
@@ -181,10 +181,10 @@ void LandmarkFactoryRpgSasp::found_simple_lm_and_order(
         }
 
         // Remove disj_lm from landmark graph
-        lm_graph->remove_node(disj_lm);
+        remove_node(disj_lm);
 
         // Add simple landmark node
-        LandmarkNode &simple_lm = lm_graph->add_landmark(move(landmark));
+        LandmarkNode &simple_lm = add_landmark_to_graph(move(landmark));
         open_landmarks.push_back(&simple_lm);
         edge_add(simple_lm, b, t);
 
@@ -194,7 +194,7 @@ void LandmarkFactoryRpgSasp::found_simple_lm_and_order(
             edge_add(*pred, simple_lm, EdgeType::NATURAL);
         }
     } else {
-        LandmarkNode &simple_lm = lm_graph->add_landmark(move(landmark));
+        LandmarkNode &simple_lm = add_landmark_to_graph(move(landmark));
         open_landmarks.push_back(&simple_lm);
         edge_add(simple_lm, b, t);
     }
@@ -211,7 +211,7 @@ void LandmarkFactoryRpgSasp::found_disj_lm_and_order(
         if (initial_state[lm.var].get_value() == lm.value) {
             return;
         }
-        if (lm_graph->contains_simple_landmark(lm)) {
+        if (contains_simple_landmark(lm)) {
             // Propositions in this disj. LM exist already as simple LMs.
             simple_lm_exists = true;
             lm_prop = lm;
@@ -222,10 +222,10 @@ void LandmarkFactoryRpgSasp::found_disj_lm_and_order(
     if (simple_lm_exists) {
         // Note: don't add orders as we can't be sure that they're correct
         return;
-    } else if (lm_graph->contains_overlapping_disjunctive_landmark(a)) {
-        if (lm_graph->contains_identical_disjunctive_landmark(a)) {
+    } else if (contains_overlapping_disjunctive_landmark(a)) {
+        if (contains_identical_disjunctive_landmark(a)) {
             // LM already exists, just add order.
-            new_lm_node = &lm_graph->get_disjunctive_landmark(*a.begin());
+            new_lm_node = &get_disjunctive_landmark(*a.begin());
             edge_add(*new_lm_node, b, t);
             return;
         }
@@ -234,7 +234,7 @@ void LandmarkFactoryRpgSasp::found_disj_lm_and_order(
     }
     // This LM and no part of it exist, add the LM to the landmarks graph.
     Landmark landmark(vector<FactPair>(a.begin(), a.end()), true, false);
-    new_lm_node = &lm_graph->add_landmark(move(landmark));
+    new_lm_node = &add_landmark_to_graph(move(landmark));
     open_landmarks.push_back(new_lm_node);
     edge_add(*new_lm_node, b, t);
 }
@@ -374,7 +374,7 @@ void LandmarkFactoryRpgSasp::compute_disjunctive_preconditions(
                 // Only deal with propositions that are not shared preconditions
                 // (those have been found already and are simple landmarks).
                 const FactPair pre_fact(pre.first, pre.second);
-                if (!lm_graph->contains_simple_landmark(pre_fact)) {
+                if (!contains_simple_landmark(pre_fact)) {
                     preconditions[disj_class].push_back(pre_fact);
                     used_operators[disj_class].insert(i);
                 }
@@ -403,7 +403,7 @@ void LandmarkFactoryRpgSasp::generate_relaxed_landmarks(
 
     for (FactProxy goal : task_proxy.get_goals()) {
         Landmark landmark({goal.get_pair()}, false, false, true);
-        LandmarkNode &lm_node = lm_graph->add_landmark(move(landmark));
+        LandmarkNode &lm_node = add_landmark_to_graph(move(landmark));
         open_landmarks.push_back(&lm_node);
     }
 
@@ -605,8 +605,8 @@ void LandmarkFactoryRpgSasp::find_forward_orders(const VariablesProxy &variables
 void LandmarkFactoryRpgSasp::add_lm_forward_orders() {
     for (auto &node : lm_graph->get_nodes()) {
         for (const auto &node2_pair : forward_orders[node.get()]) {
-            if (lm_graph->contains_simple_landmark(node2_pair)) {
-                LandmarkNode &node2 = lm_graph->get_simple_landmark(node2_pair);
+            if (contains_simple_landmark(node2_pair)) {
+                LandmarkNode &node2 = get_simple_landmark(node2_pair);
                 edge_add(*node, node2, EdgeType::NATURAL);
             }
         }
@@ -620,13 +620,14 @@ void LandmarkFactoryRpgSasp::discard_disjunctive_landmarks() {
       even if we don't want to use disjunctive landmarks during search. So we
       allow removing disjunctive landmarks after landmark generation.
     */
-    if (lm_graph->get_num_disjunctive_landmarks() > 0) {
+    if (get_num_disjunctive_landmarks() > 0) {
         if (log.is_at_least_normal()) {
-            log << "Discarding " << lm_graph->get_num_disjunctive_landmarks()
+            log << "Discarding " << get_num_disjunctive_landmarks()
                 << " disjunctive landmarks" << endl;
         }
-        lm_graph->remove_node_if(
-            [](const LandmarkNode &node) {return node.get_landmark().disjunctive;});
+        remove_node_if([](const LandmarkNode &node) {
+            return node.get_landmark().disjunctive;
+        });
     }
 }
 
