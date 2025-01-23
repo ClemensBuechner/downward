@@ -11,50 +11,19 @@ import common_setup
 from common_setup import IssueConfig, IssueExperiment
 from landmark_parser import LandmarkParser
 
-ARCHIVE_PATH = f"buechner/downward/untangle-lm-prefops"
+ISSUE = "issue1165"
+ARCHIVE_PATH = f"ai/downward/{ISSUE}"
 DIR = os.path.dirname(os.path.abspath(__file__))
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 REVISIONS = [
-    "3c8a65b5d",
-    "a2d652541",
+    f"{ISSUE}-base",
+    f"{ISSUE}-v1",
 ]
 GLOBAL_DRIVER_OPTIONS = []
 BUILDS = ["release"]
-CONFIG_NICKS = []
-for pref in [True, False]:
-    name = "lama"
-    if pref:
-        name += "-pref"
-    CONFIG_NICKS.append(
-        (name,
-         ["--search", "--if-unit-cost",
-          "let(hlm, landmark_sum(lm_reasonable_orders_hps("
-          f"lm_rhw()), pref={pref}), let(hff, ff(),"
-          """iterated([
-              lazy_greedy([hff,hlm],preferred=[hff,hlm]),
-              lazy_wastar([hff,hlm],preferred=[hff,hlm],w=5),
-              lazy_wastar([hff,hlm],preferred=[hff,hlm],w=3),
-              lazy_wastar([hff,hlm],preferred=[hff,hlm],w=2),
-              lazy_wastar([hff,hlm],preferred=[hff,hlm],w=1)
-           ],repeat_last=true,continue_on_fail=true)))""",
-          "--if-non-unit-cost",
-          "let(hlm1, landmark_sum(lm_reasonable_orders_hps("
-          f"lm_rhw()),transform=adapt_costs(one),pref={pref}),"
-          "let(hff1, ff(transform=adapt_costs(one)),"
-          "let(hlm2, landmark_sum(lm_reasonable_orders_hps("
-          f"lm_rhw()),transform=adapt_costs(plusone),pref={pref}),"
-          "let(hff2, ff(transform=adapt_costs(plusone)),"
-          """iterated([
-              lazy_greedy([hff1,hlm1],preferred=[hff1,hlm1], cost_type=one,reopen_closed=false),
-              lazy_greedy([hff2,hlm2],preferred=[hff2,hlm2], reopen_closed=false),
-              lazy_wastar([hff2,hlm2],preferred=[hff2,hlm2],w=5),
-              lazy_wastar([hff2,hlm2],preferred=[hff2,hlm2],w=3),
-              lazy_wastar([hff2,hlm2],preferred=[hff2,hlm2],w=2),
-              lazy_wastar([hff2,hlm2],preferred=[hff2,hlm2],w=1)
-          ],repeat_last=true,continue_on_fail=true)))))""",
-          # Append --always to be on the safe side if we want to append
-          # additional options later.
-          "--always"]))
+CONFIG_NICKS = [
+    ("cegar", ["--search", "astar(cegar(subtasks=[landmarks()]))"]),
+]
 
 CONFIGS = [
     IssueConfig(
@@ -67,7 +36,7 @@ CONFIGS = [
     for config_nick, config in CONFIG_NICKS
 ]
 
-SUITE = common_setup.DEFAULT_SATISFICING_SUITE
+SUITE = common_setup.DEFAULT_OPTIMAL_SUITE
 ENVIRONMENT = BaselSlurmEnvironment(
     partition="infai_2",
     email="clemens.buechner@unibas.ch",
@@ -99,7 +68,7 @@ exp = IssueExperiment(
 exp.add_suite(BENCHMARKS_DIR, SUITE)
 
 exp.add_parser(exp.EXITCODE_PARSER)
-exp.add_parser(exp.ANYTIME_SEARCH_PARSER)
+exp.add_parser(exp.SINGLE_SEARCH_PARSER)
 exp.add_parser(exp.PLANNER_PARSER)
 exp.add_parser(LandmarkParser())
 

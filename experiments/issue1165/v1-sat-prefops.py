@@ -11,12 +11,13 @@ import common_setup
 from common_setup import IssueConfig, IssueExperiment
 from landmark_parser import LandmarkParser
 
-ARCHIVE_PATH = f"buechner/downward/untangle-lm-prefops"
+ISSUE = "issue1165"
+ARCHIVE_PATH = f"ai/downward/{ISSUE}"
 DIR = os.path.dirname(os.path.abspath(__file__))
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 REVISIONS = [
-    "3c8a65b5d",
-    "a2d652541",
+    f"{ISSUE}-base",
+    f"{ISSUE}-v1",
 ]
 GLOBAL_DRIVER_OPTIONS = []
 BUILDS = ["release"]
