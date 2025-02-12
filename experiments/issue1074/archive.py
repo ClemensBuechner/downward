@@ -107,7 +107,7 @@ def _archive_eval_dir(exp, host, archive_path):
 def _pack(filenames, archive_filename, path_prefix):
     """
     Packs all files given in filenames into an archive (.tar.xz) located at
-    archive_filename. The path_prefix is removed in the archive, i.e., 
+    archive_filename. The path_prefix is removed in the archive, i.e.,
     if the filename is '/path/to/file' and the prefix is '/path', the location
     inside the archive will be 'to/file'.
     """
@@ -122,3 +122,4 @@ def _rsync(filenames, host, target_path):
     # https://stackoverflow.com/questions/1636889
     subprocess.run(["ssh", host, "mkdir", "-p", target_path])
     subprocess.run(["rsync", "-avz"] + [str(f) for f in filenames] + [f"{host}:{target_path}"])
+

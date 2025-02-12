@@ -3,7 +3,7 @@
 import itertools
 import os
 import platform
-import subprocess
+import re
 import sys
 
 from lab.experiment import ARGPARSER
@@ -137,9 +137,7 @@ def get_repo_base():
 
 
 def is_running_on_cluster():
-    node = platform.node()
-    return node.endswith(".scicore.unibas.ch") or node.endswith(
-        ".cluster.bc2.ch") or node.startswith("icb") or node == "login12"
+    return re.fullmatch(r"login12|ic[ab]\d\d", platform.node())
 
 
 def is_test_run():
@@ -148,7 +146,7 @@ def is_test_run():
 
 
 def get_algo_nick(revision, config_nick):
-    return f"{revision}{'-' if revision else ''}{config_nick}"
+    return f"{revision}-{config_nick}"
 
 
 class IssueConfig(object):
@@ -307,7 +305,7 @@ class IssueExperiment(FastDownwardExperiment):
             get_experiment_name() + "." + report.output_format)
         self.add_report(report, outfile=outfile)
 
-    def add_comparison_table_step(self, **kwargs):
+    def add_comparison_table_step(self, revision_pairs=[], **kwargs):
         """Add a step that makes pairwise revision comparisons.
 
         Create comparative reports for all pairs of Fast Downward
@@ -324,8 +322,10 @@ class IssueExperiment(FastDownwardExperiment):
         """
         kwargs.setdefault("attributes", self.DEFAULT_TABLE_ATTRIBUTES)
 
+        if not revision_pairs:
+            revision_pairs = [(rev1, rev2) for rev1, rev2 in itertools.combinations(self._revisions, 2)]
         def make_comparison_tables():
-            for rev1, rev2 in itertools.combinations(self._revisions, 2):
+            for rev1, rev2 in revision_pairs:
                 compared_configs = []
                 for config in self._configs:
                     config_nick = config.nick
@@ -370,19 +370,11 @@ class IssueExperiment(FastDownwardExperiment):
             print("Make scatter plot for", name)
             algo1 = get_algo_nick(rev1, config_nick)
             algo2 = get_algo_nick(rev2, config_nick if config_nick2 is None else config_nick2)
-            if attribute == "cost":
-                report = ScatterPlotReport(
-                    filter_algorithm=[algo1, algo2],
-                    attributes=[attribute],
-                    relative=relative,
-                    scale="log",
-                    get_category=lambda run1, run2: run1["domain"])
-            else:
-                report = ScatterPlotReport(
-                    filter_algorithm=[algo1, algo2],
-                    attributes=[attribute],
-                    relative=relative,
-                    get_category=lambda run1, run2: run1["domain"])
+            report = ScatterPlotReport(
+                filter_algorithm=[algo1, algo2],
+                attributes=[attribute],
+                relative=relative,
+                get_category=lambda run1, run2: run1["domain"])
             report(
                 self.eval_dir,
                 os.path.join(scatter_dir, rev1 + "-" + rev2, name))
@@ -400,3 +392,7 @@ class IssueExperiment(FastDownwardExperiment):
 
     def add_archive_step(self, archive_path):
         archive.add_archive_step(self, archive_path)
+
+    def add_archive_eval_dir_step(self, archive_path):
+        archive.add_archive_eval_dir_step(self, archive_path)
+
