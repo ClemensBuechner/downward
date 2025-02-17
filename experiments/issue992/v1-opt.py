@@ -19,7 +19,7 @@ REVISIONS = [
     f"{ISSUE}-base",
     f"{ISSUE}-v1",
 ]
-GLOBAL_DRIVER_OPTIONS = []
+GLOBAL_DRIVER_OPTIONS = ["--overall-time-limit", "5m"]
 BUILDS = ["release"]
 CONFIG_NICKS = [
     ("lm-exhaust",
