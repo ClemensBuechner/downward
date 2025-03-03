@@ -17,21 +17,18 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 REVISIONS = [
     f"{ISSUE}-base",
-    f"{ISSUE}-v2",
+    f"{ISSUE}-v3",
 ]
 GLOBAL_DRIVER_OPTIONS = ["--overall-time-limit", "5m"]
 BUILDS = ["release"]
 CONFIG_NICKS = [
-    ("lm-exhaust",
-     ["--search", "let(lmcp, landmark_cost_partitioning(lm_exhaust()),"
-                  "astar(lmcp,lazy_evaluator=lmcp))"], []),
-    ("lm-hm", ["--search", "let(lmcp, landmark_cost_partitioning(lm_hm(m=2)),"
-                           "astar(lmcp,lazy_evaluator=lmcp))"], []),
-    ("bjolp", [], ["--alias", "seq-opt-bjolp"]),
-    ("bjolp-opt",
-     ["--search", "let(lmcp, landmark_cost_partitioning("
-                  "lm_reasonable_orders_hps(lm_merged([lm_rhw(),lm_hm(m=1)]))),"
-                  "astar(lmcp,lazy_evaluator=lmcp))"], [])
+    ("lama-first", [], ["--alias", "lama-first"]),
+    ("lama-first-pref",
+     ["--search",
+      "let(hlm, landmark_sum(lm_factory=lm_reasonable_orders_hps(lm_rhw()),transform=adapt_costs(one),pref=true), "
+      "let(hff, ff(transform=adapt_costs(one)),"
+      "lazy_greedy([hff,hlm],preferred=[hff,hlm],cost_type=one,reopen_closed=false)))"], []),
+    ("lm-zg", ["--search", "lazy_greedy([landmark_sum(lm_zg())])"], []),
 ]
 CONFIGS = [
     IssueConfig(
@@ -44,7 +41,7 @@ CONFIGS = [
     for nick, config, driver_options in CONFIG_NICKS
 ]
 
-SUITE = common_setup.DEFAULT_OPTIMAL_SUITE
+SUITE = common_setup.DEFAULT_SATISFICING_SUITE
 ENVIRONMENT = BaselSlurmEnvironment(
     partition="infai_2",
     email="clemens.buechner@unibas.ch",
