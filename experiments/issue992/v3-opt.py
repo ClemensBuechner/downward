@@ -32,7 +32,7 @@ CONFIG_NICKS = [
      ["--search", "let(lmcp, landmark_cost_partitioning("
                   "lm_reasonable_orders_hps(lm_merged([lm_rhw(),lm_hm(m=1)]))),"
                   "astar(lmcp,lazy_evaluator=lmcp))"], []),
-    ("cegar", ["--search", "astar(cegar([landmarks()]))"]),
+    ("cegar", ["--search", "astar(cegar([landmarks()]))"], []),
 ]
 CONFIGS = [
     IssueConfig(
