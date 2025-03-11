@@ -16,24 +16,36 @@ ARCHIVE_PATH = f"ai/downward/{ISSUE}"
 DIR = os.path.dirname(os.path.abspath(__file__))
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 REVISIONS = [
-    f"{ISSUE}-base",
-    f"{ISSUE}-v3",
+    f"{ISSUE}-v4",
+    f"{ISSUE}-v5",
 ]
 GLOBAL_DRIVER_OPTIONS = ["--overall-time-limit", "5m"]
-if common_setup.is_test_run():
-    GLOBAL_DRIVER_OPTIONS += ["--overall-time-limit", "1m"]
 BUILDS = ["release"]
+CONFIG_NICKS = [
+    ("lm-exhaust",
+     ["--search", "let(lmcp, landmark_cost_partitioning(lm_exhaust()),"
+                  "astar(lmcp,lazy_evaluator=lmcp))"], []),
+    ("lm-hm", ["--search", "let(lmcp, landmark_cost_partitioning(lm_hm(m=2)),"
+                           "astar(lmcp,lazy_evaluator=lmcp))"], []),
+    ("bjolp", [], ["--alias", "seq-opt-bjolp"]),
+    ("bjolp-opt",
+     ["--search", "let(lmcp, landmark_cost_partitioning("
+                  "lm_reasonable_orders_hps(lm_merged([lm_rhw(),lm_hm(m=1)]))),"
+                  "astar(lmcp,lazy_evaluator=lmcp))"], []),
+    ("cegar", ["--search", "astar(cegar([landmarks()]))"], []),
+]
 CONFIGS = [
     IssueConfig(
-        "lama",
-        [],
+        nick,
+        config,
         build_options=[build],
-        driver_options=GLOBAL_DRIVER_OPTIONS + ["--alias", "lama"],
+        driver_options=GLOBAL_DRIVER_OPTIONS + driver_options,
     )
     for build in BUILDS
+    for nick, config, driver_options in CONFIG_NICKS
 ]
 
-SUITE = common_setup.DEFAULT_SATISFICING_SUITE
+SUITE = common_setup.DEFAULT_OPTIMAL_SUITE
 ENVIRONMENT = BaselSlurmEnvironment(
     partition="infai_2",
     email="clemens.buechner@unibas.ch",
@@ -65,7 +77,7 @@ exp = IssueExperiment(
 exp.add_suite(BENCHMARKS_DIR, SUITE)
 
 exp.add_parser(exp.EXITCODE_PARSER)
-exp.add_parser(exp.ANYTIME_SEARCH_PARSER)
+exp.add_parser(exp.SINGLE_SEARCH_PARSER)
 exp.add_parser(exp.PLANNER_PARSER)
 exp.add_parser(LandmarkParser())
 
