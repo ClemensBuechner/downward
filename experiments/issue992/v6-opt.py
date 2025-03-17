@@ -16,8 +16,9 @@ ARCHIVE_PATH = f"ai/downward/{ISSUE}"
 DIR = os.path.dirname(os.path.abspath(__file__))
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 REVISIONS = [
-    f"{ISSUE}-v4",
     f"{ISSUE}-v5",
+    f"{ISSUE}-v6",
+    f"{ISSUE}-hm-v1",
 ]
 GLOBAL_DRIVER_OPTIONS = ["--overall-time-limit", "5m"]
 BUILDS = ["release"]
