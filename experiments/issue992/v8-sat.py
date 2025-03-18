@@ -17,20 +17,28 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 REVISIONS = [
     f"{ISSUE}-v5",
-    f"{ISSUE}-v6",
+    f"{ISSUE}-v8",
 ]
 GLOBAL_DRIVER_OPTIONS = ["--overall-time-limit", "5m"]
-if common_setup.is_test_run():
-    GLOBAL_DRIVER_OPTIONS += ["--overall-time-limit", "1m"]
 BUILDS = ["release"]
+CONFIG_NICKS = [
+    ("lama-first", [], ["--alias", "lama-first"]),
+    ("lama-first-pref",
+     ["--search",
+      "let(hlm, landmark_sum(lm_factory=lm_reasonable_orders_hps(lm_rhw()),transform=adapt_costs(one),pref=true), "
+      "let(hff, ff(transform=adapt_costs(one)),"
+      "lazy_greedy([hff,hlm],preferred=[hff,hlm],cost_type=one,reopen_closed=false)))"], []),
+    ("lm-zg", ["--search", "lazy_greedy([landmark_sum(lm_zg())])"], []),
+]
 CONFIGS = [
     IssueConfig(
-        "lama",
-        [],
+        nick,
+        config,
         build_options=[build],
-        driver_options=GLOBAL_DRIVER_OPTIONS + ["--alias", "lama"],
+        driver_options=GLOBAL_DRIVER_OPTIONS + driver_options,
     )
     for build in BUILDS
+    for nick, config, driver_options in CONFIG_NICKS
 ]
 
 SUITE = common_setup.DEFAULT_SATISFICING_SUITE
@@ -65,7 +73,7 @@ exp = IssueExperiment(
 exp.add_suite(BENCHMARKS_DIR, SUITE)
 
 exp.add_parser(exp.EXITCODE_PARSER)
-exp.add_parser(exp.ANYTIME_SEARCH_PARSER)
+exp.add_parser(exp.SINGLE_SEARCH_PARSER)
 exp.add_parser(exp.PLANNER_PARSER)
 exp.add_parser(LandmarkParser())
 
