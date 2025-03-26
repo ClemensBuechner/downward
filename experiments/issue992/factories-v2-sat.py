@@ -17,7 +17,7 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 REVISIONS = [
     f"{ISSUE}-v5",
-    f"{ISSUE}-factories-v1",
+    f"{ISSUE}-factories-v2",
 ]
 GLOBAL_DRIVER_OPTIONS = ["--overall-time-limit", "5m"]
 BUILDS = ["release"]
