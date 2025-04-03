@@ -18,7 +18,7 @@ BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 REVISIONS = [
     f"{ISSUE}-base",
     f"{ISSUE}-v9",
-    f"{ISSUE}-factories-v5",
+    f"{ISSUE}-factories-v6",
 ]
 GLOBAL_DRIVER_OPTIONS = ["--overall-time-limit", "5m"]
 BUILDS = ["release"]
