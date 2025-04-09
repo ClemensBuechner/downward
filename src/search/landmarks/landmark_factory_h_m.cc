@@ -644,16 +644,14 @@ void LandmarkFactoryHM::calc_achievers(const TaskProxy &task_proxy) {
         }
 
         for (int op_id : candidates) {
-            int matching_preconditions = 0;
+            bool reached_end = true;
             FluentSet post = get_operator_postcondition(variables.size(), operators[op_id]);
             FluentSet pre = get_operator_precondition(operators[op_id]);
             for (size_t j = 0; j < landmark.facts.size(); ++j) {
                 const FactPair &lm_fact = landmark.facts[j];
                 // action adds this element of lm as well
-                if (find(post.begin(), post.end(), lm_fact) != post.end()) {
-                    ++matching_preconditions;
+                if (find(post.begin(), post.end(), lm_fact) != post.end())
                     continue;
-                }
                 bool is_mutex = false;
                 for (const FactPair &fluent : post) {
                     if (variables[fluent.var].get_fact(fluent.value).is_mutex(
@@ -663,6 +661,7 @@ void LandmarkFactoryHM::calc_achievers(const TaskProxy &task_proxy) {
                     }
                 }
                 if (is_mutex) {
+                    reached_end = false;
                     break;
                 }
                 for (const FactPair &fluent : pre) {
@@ -675,10 +674,11 @@ void LandmarkFactoryHM::calc_achievers(const TaskProxy &task_proxy) {
                     }
                 }
                 if (is_mutex) {
+                    reached_end = false;
                     break;
                 }
             }
-            if (matching_preconditions == static_cast<int>(landmark.facts.size())) {
+            if (reached_end) {
                 // not inconsistent with any of the other landmark fluents
                 landmark.possible_achievers.insert(op_id);
             }
