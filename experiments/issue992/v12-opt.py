@@ -17,7 +17,7 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
 REVISIONS = [
     f"{ISSUE}-base",
-    f"{ISSUE}-v11",
+    f"{ISSUE}-v12",
 ]
 GLOBAL_DRIVER_OPTIONS = []
 BUILDS = ["release"]
