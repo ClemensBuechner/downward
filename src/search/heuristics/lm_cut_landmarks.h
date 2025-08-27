@@ -52,10 +52,12 @@ struct RelaxedProposition {
     std::vector<RelaxedOperator *> effect_of;
 
     PropositionStatus status;
-    int h_max_cost;
+    int h_cost;
 };
 
 class LandmarkCutLandmarks {
+    bool use_hadd_instead_of_hmax;
+
     std::vector<RelaxedOperator> relaxed_operators;
     std::vector<std::vector<RelaxedProposition>> propositions;
     RelaxedProposition artificial_precondition;
@@ -79,9 +81,9 @@ class LandmarkCutLandmarks {
 
     void enqueue_if_necessary(RelaxedProposition *prop, int cost) {
         assert(cost >= 0);
-        if (prop->status == UNREACHED || prop->h_max_cost > cost) {
+        if (prop->status == UNREACHED || prop->h_cost > cost) {
             prop->status = REACHED;
-            prop->h_max_cost = cost;
+            prop->h_cost = cost;
             priority_queue.push(cost, prop);
         }
     }
@@ -93,7 +95,8 @@ public:
     using CostCallback = std::function<void(int)>;
     using LandmarkCallback = std::function<void(const Landmark &, int)>;
 
-    LandmarkCutLandmarks(const TaskProxy &task_proxy);
+    LandmarkCutLandmarks(const TaskProxy &task_proxy,
+                         bool use_hadd_instead_of_hmax);
 
     /*
       Compute LM-cut landmarks for the given state.
@@ -116,9 +119,9 @@ public:
 inline void RelaxedOperator::update_h_max_supporter() {
     assert(!unsatisfied_preconditions);
     for (size_t i = 0; i < preconditions.size(); ++i)
-        if (preconditions[i]->h_max_cost > h_max_supporter->h_max_cost)
+        if (preconditions[i]->h_cost > h_max_supporter->h_cost)
             h_max_supporter = preconditions[i];
-    h_max_supporter_cost = h_max_supporter->h_max_cost;
+    h_max_supporter_cost = h_max_supporter->h_cost;
 }
 }
 

@@ -10,7 +10,9 @@ using namespace std;
 
 namespace lm_cut_heuristic {
 // construction and destruction
-LandmarkCutLandmarks::LandmarkCutLandmarks(const TaskProxy &task_proxy) {
+LandmarkCutLandmarks::LandmarkCutLandmarks(
+    const TaskProxy &task_proxy, bool use_hadd_instead_of_hmax)
+    : use_hadd_instead_of_hmax(use_hadd_instead_of_hmax) {
     task_properties::verify_no_axioms(task_proxy);
     task_properties::verify_no_conditional_effects(task_proxy);
 
@@ -118,7 +120,7 @@ void LandmarkCutLandmarks::first_exploration(const State &state) {
         pair<int, RelaxedProposition *> top_pair = priority_queue.pop();
         int popped_cost = top_pair.first;
         RelaxedProposition *prop = top_pair.second;
-        int prop_cost = prop->h_max_cost;
+        int prop_cost = prop->h_cost;
         assert(prop_cost <= popped_cost);
         if (prop_cost < popped_cost)
             continue;
@@ -130,7 +132,14 @@ void LandmarkCutLandmarks::first_exploration(const State &state) {
             if (relaxed_op->unsatisfied_preconditions == 0) {
                 relaxed_op->h_max_supporter = prop;
                 relaxed_op->h_max_supporter_cost = prop_cost;
-                int target_cost = prop_cost + relaxed_op->cost;
+                int target_cost = relaxed_op->cost;
+                if (use_hadd_instead_of_hmax) {
+                    for (const RelaxedProposition *pre : relaxed_op->preconditions) {
+                        target_cost += pre->h_cost;
+                    }
+                } else {
+                    target_cost += prop_cost;
+                }
                 for (RelaxedProposition *effect : relaxed_op->effects) {
                     enqueue_if_necessary(effect, target_cost);
                 }
@@ -149,7 +158,14 @@ void LandmarkCutLandmarks::first_exploration_incremental(
     */
     priority_queue.add_virtual_pushes(num_propositions);
     for (RelaxedOperator *relaxed_op : cut) {
-        int cost = relaxed_op->h_max_supporter_cost + relaxed_op->cost;
+        int cost = relaxed_op->cost;
+        if (use_hadd_instead_of_hmax) {
+            for (const RelaxedProposition *pre : relaxed_op->preconditions) {
+                cost += pre->h_cost;
+            }
+        } else {
+            cost += relaxed_op->h_max_supporter_cost;
+        }
         for (RelaxedProposition *effect : relaxed_op->effects)
             enqueue_if_necessary(effect, cost);
     }
@@ -157,7 +173,7 @@ void LandmarkCutLandmarks::first_exploration_incremental(
         pair<int, RelaxedProposition *> top_pair = priority_queue.pop();
         int popped_cost = top_pair.first;
         RelaxedProposition *prop = top_pair.second;
-        int prop_cost = prop->h_max_cost;
+        int prop_cost = prop->h_cost;
         assert(prop_cost <= popped_cost);
         if (prop_cost < popped_cost)
             continue;
@@ -172,7 +188,14 @@ void LandmarkCutLandmarks::first_exploration_incremental(
                     if (new_supp_cost != old_supp_cost) {
                         // This operator has become cheaper.
                         assert(new_supp_cost < old_supp_cost);
-                        int target_cost = new_supp_cost + relaxed_op->cost;
+                        int target_cost = relaxed_op->cost;
+                        if (use_hadd_instead_of_hmax) {
+                            for (const RelaxedProposition *pre : relaxed_op->preconditions) {
+                                target_cost += pre->h_cost;
+                            }
+                        } else {
+                            target_cost += new_supp_cost;
+                        }
                         for (RelaxedProposition *effect : relaxed_op->effects)
                             enqueue_if_necessary(effect, target_cost);
                     }
@@ -259,10 +282,10 @@ void LandmarkCutLandmarks::validate_h_max() const {
         } else {
             assert(op.h_max_supporter);
             int h_max_cost = op.h_max_supporter_cost;
-            assert(h_max_cost == op.h_max_supporter->h_max_cost);
+            assert(h_max_cost == op.h_max_supporter->h_cost);
             for (RelaxedProposition *pre : op.preconditions) {
                 assert(pre->status != UNREACHED);
-                assert(pre->h_max_cost <= h_max_cost);
+                assert(pre->h_cost <= h_max_cost);
             }
         }
     }
@@ -287,7 +310,7 @@ bool LandmarkCutLandmarks::compute_landmarks(
     if (artificial_goal.status == UNREACHED)
         return true;
 
-    while (artificial_goal.h_max_cost != 0) {
+    while (artificial_goal.h_cost != 0) {
         mark_goal_plateau(&artificial_goal);
         assert(cut.empty());
         second_exploration(state, second_exploration_queue, cut);

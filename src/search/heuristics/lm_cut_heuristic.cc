@@ -14,10 +14,11 @@ using namespace std;
 
 namespace lm_cut_heuristic {
 LandmarkCutHeuristic::LandmarkCutHeuristic(
-    const shared_ptr<AbstractTask> &transform, bool cache_estimates,
-    const string &description, utils::Verbosity verbosity)
+    bool use_hadd_instead_of_hmax, const shared_ptr<AbstractTask> &transform,
+    bool cache_estimates, const string &description, utils::Verbosity verbosity)
     : Heuristic(transform, cache_estimates, description, verbosity),
-      landmark_generator(make_unique<LandmarkCutLandmarks>(task_proxy)) {
+      landmark_generator(make_unique<LandmarkCutLandmarks>(
+          task_proxy, use_hadd_instead_of_hmax)) {
     if (log.is_at_least_normal()) {
         log << "Initializing landmark cut heuristic..." << endl;
     }
@@ -41,6 +42,7 @@ public:
     LandmarkCutHeuristicFeature() : TypedFeature("lmcut") {
         document_title("Landmark-cut heuristic");
 
+        add_option<bool>("use_hadd_instead_of_hmax", "", "false");
         add_heuristic_options_to_feature(*this, "lmcut");
 
         document_language_support("action costs", "supported");
@@ -56,6 +58,7 @@ public:
     virtual shared_ptr<LandmarkCutHeuristic> create_component(
         const plugins::Options &opts) const override {
         return plugins::make_shared_from_arg_tuples<LandmarkCutHeuristic>(
+            opts.get<bool>("use_hadd_instead_of_hmax"),
             get_heuristic_arguments_from_options(opts));
     }
 };
