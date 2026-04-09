@@ -47,7 +47,7 @@ DEFAULT_OPTIMAL_SUITE = [
     'parking-opt14-strips', 'pathways', 'pegsol-08-strips',
     'pegsol-opt11-strips', 'petri-net-alignment-opt18-strips',
     'pipesworld-notankage', 'pipesworld-tankage', 'psr-small',
-    'quantum-layout-opt23', 'rovers', 'satellite',
+    'quantum-layout-opt23-strips', 'rovers', 'satellite',
     'scanalyzer-08-strips', 'scanalyzer-opt11-strips',
     'snake-opt18-strips', 'sokoban-opt08-strips',
     'sokoban-opt11-strips', 'spider-opt18-strips', 'storage',
