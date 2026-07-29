@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+# Last edited on May 14, 2025 to add IPC 2023 domains.
+
 import itertools
 import os
 import platform
-import subprocess
+import re
 import sys
 
 from lab.experiment import ARGPARSER
@@ -44,8 +46,9 @@ DEFAULT_OPTIMAL_SUITE = [
     'parcprinter-opt11-strips', 'parking-opt11-strips',
     'parking-opt14-strips', 'pathways', 'pegsol-08-strips',
     'pegsol-opt11-strips', 'petri-net-alignment-opt18-strips',
-    'pipesworld-notankage', 'pipesworld-tankage', 'psr-small', 'rovers',
-    'satellite', 'scanalyzer-08-strips', 'scanalyzer-opt11-strips',
+    'pipesworld-notankage', 'pipesworld-tankage', 'psr-small',
+    'quantum-layout-opt23', 'rovers', 'satellite',
+    'scanalyzer-08-strips', 'scanalyzer-opt11-strips',
     'snake-opt18-strips', 'sokoban-opt08-strips',
     'sokoban-opt11-strips', 'spider-opt18-strips', 'storage',
     'termes-opt18-strips', 'tetris-opt14-strips',
@@ -63,29 +66,30 @@ DEFAULT_SATISFICING_SUITE = [
     'data-network-sat18-strips', 'depot', 'driverlog',
     'elevators-sat08-strips', 'elevators-sat11-strips',
     'flashfill-sat18-adl', 'floortile-sat11-strips',
-    'floortile-sat14-strips', 'freecell', 'ged-sat14-strips', 'grid',
-    'gripper', 'hiking-sat14-strips', 'logistics00', 'logistics98',
+    'floortile-sat14-strips', 'folding-sat23-adl', 'freecell',
+    'ged-sat14-strips', 'grid', 'gripper', 'hiking-sat14-strips',
+    'labyrinth-sat23-adl', 'logistics00', 'logistics98',
     'maintenance-sat14-adl', 'miconic', 'miconic-fulladl',
     'miconic-simpleadl', 'movie', 'mprime', 'mystery',
     'nomystery-sat11-strips', 'nurikabe-sat18-adl', 'openstacks',
     'openstacks-sat08-adl', 'openstacks-sat08-strips',
     'openstacks-sat11-strips', 'openstacks-sat14-strips',
-    'openstacks-strips',
-    'organic-synthesis-sat18-strips',
+    'openstacks-strips', 'organic-synthesis-sat18-strips',
     'organic-synthesis-split-sat18-strips', 'parcprinter-08-strips',
     'parcprinter-sat11-strips', 'parking-sat11-strips',
-    'parking-sat14-strips', 'pathways', 
-    'pegsol-08-strips', 'pegsol-sat11-strips', 
-    'pipesworld-notankage', 'pipesworld-tankage', 
-    'psr-small', 'rovers', 'satellite',
+    'parking-sat14-strips', 'pathways', 'pegsol-08-strips',
+    'pegsol-sat11-strips', 'pipesworld-notankage', 'pipesworld-tankage',
+    'psr-small', 'quantum-layout-sat23-strips',
+    'recharging-robots-sat23-adl', 'ricochet-robots-sat23-adl',
+    'rovers', 'rubiks-cube-sat23-adl', 'satellite',
     'scanalyzer-08-strips', 'scanalyzer-sat11-strips', 'schedule',
-    'settlers-sat18-adl', 'snake-sat18-strips', 'sokoban-sat08-strips',
-    'sokoban-sat11-strips', 'spider-sat18-strips', 'storage',
-    'termes-sat18-strips', 'tetris-sat14-strips',
-    'thoughtful-sat14-strips', 'tidybot-sat11-strips', 'tpp',
-    'transport-sat08-strips', 'transport-sat11-strips',
-    'transport-sat14-strips', 'trucks', 'trucks-strips',
-    'visitall-sat11-strips', 'visitall-sat14-strips',
+    'settlers-sat18-adl', 'slitherlink-sat23-adl', 'snake-sat18-strips',
+    'sokoban-sat08-strips', 'sokoban-sat11-strips',
+    'spider-sat18-strips', 'storage', 'termes-sat18-strips',
+    'tetris-sat14-strips', 'thoughtful-sat14-strips',
+    'tidybot-sat11-strips', 'tpp', 'transport-sat08-strips',
+    'transport-sat11-strips', 'transport-sat14-strips', 'trucks',
+    'trucks-strips', 'visitall-sat11-strips', 'visitall-sat14-strips',
     'woodworking-sat08-strips', 'woodworking-sat11-strips',
     'zenotravel']
 
@@ -137,8 +141,7 @@ def get_repo_base():
 
 
 def is_running_on_cluster():
-    node = platform.node()
-    return node.endswith(".scicore.unibas.ch") or node.endswith(".cluster.bc2.ch")
+    return re.fullmatch(r"login12|ic[ab]\d\d", platform.node())
 
 
 def is_test_run():
@@ -147,7 +150,7 @@ def is_test_run():
 
 
 def get_algo_nick(revision, config_nick):
-    return f"{revision}{'-' if revision else ''}{config_nick}"
+    return f"{revision}-{config_nick}"
 
 
 class IssueConfig(object):
@@ -306,7 +309,7 @@ class IssueExperiment(FastDownwardExperiment):
             get_experiment_name() + "." + report.output_format)
         self.add_report(report, outfile=outfile)
 
-    def add_comparison_table_step(self, **kwargs):
+    def add_comparison_table_step(self, revision_pairs=[], **kwargs):
         """Add a step that makes pairwise revision comparisons.
 
         Create comparative reports for all pairs of Fast Downward
@@ -323,8 +326,10 @@ class IssueExperiment(FastDownwardExperiment):
         """
         kwargs.setdefault("attributes", self.DEFAULT_TABLE_ATTRIBUTES)
 
+        if not revision_pairs:
+            revision_pairs = [(rev1, rev2) for rev1, rev2 in itertools.combinations(self._revisions, 2)]
         def make_comparison_tables():
-            for rev1, rev2 in itertools.combinations(self._revisions, 2):
+            for rev1, rev2 in revision_pairs:
                 compared_configs = []
                 for config in self._configs:
                     config_nick = config.nick
@@ -369,19 +374,11 @@ class IssueExperiment(FastDownwardExperiment):
             print("Make scatter plot for", name)
             algo1 = get_algo_nick(rev1, config_nick)
             algo2 = get_algo_nick(rev2, config_nick if config_nick2 is None else config_nick2)
-            if attribute == "cost":
-                report = ScatterPlotReport(
-                    filter_algorithm=[algo1, algo2],
-                    attributes=[attribute],
-                    relative=relative,
-                    scale="log",
-                    get_category=lambda run1, run2: run1["domain"])
-            else:
-                report = ScatterPlotReport(
-                    filter_algorithm=[algo1, algo2],
-                    attributes=[attribute],
-                    relative=relative,
-                    get_category=lambda run1, run2: run1["domain"])
+            report = ScatterPlotReport(
+                filter_algorithm=[algo1, algo2],
+                attributes=[attribute],
+                relative=relative,
+                get_category=lambda run1, run2: run1["domain"])
             report(
                 self.eval_dir,
                 os.path.join(scatter_dir, rev1 + "-" + rev2, name))
@@ -399,3 +396,7 @@ class IssueExperiment(FastDownwardExperiment):
 
     def add_archive_step(self, archive_path):
         archive.add_archive_step(self, archive_path)
+
+    def add_archive_eval_dir_step(self, archive_path):
+        archive.add_archive_eval_dir_step(self, archive_path)
+
